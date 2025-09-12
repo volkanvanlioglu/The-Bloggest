@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using TheBloggest.Data;
+using TheBloggest.Data.Models;
 
 namespace TheBloggest.Components.Account
 {

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using TheBloggest.Components.Account.Pages;
 using TheBloggest.Components.Account.Pages.Manage;
-using TheBloggest.Data;
+using TheBloggest.Data.Models;
 
 namespace Microsoft.AspNetCore.Routing
 {

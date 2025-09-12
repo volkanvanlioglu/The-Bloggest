@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TheBloggest.Data;
 
@@ -11,9 +12,11 @@ using TheBloggest.Data;
 namespace TheBloggest.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250912143937_AddBlogEntitiesFixed")]
+    partial class AddBlogEntitiesFixed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -584,7 +587,7 @@ namespace TheBloggest.Migrations
                     b.HasOne("TheBloggest.Data.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -614,7 +617,7 @@ namespace TheBloggest.Migrations
                     b.HasOne("TheBloggest.Data.Models.ApplicationUser", "UploadedBy")
                         .WithMany()
                         .HasForeignKey("UploadedById")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("UploadedBy");
@@ -672,7 +675,7 @@ namespace TheBloggest.Migrations
             modelBuilder.Entity("TheBloggest.Data.Models.Reaction", b =>
                 {
                     b.HasOne("TheBloggest.Data.Models.Post", "Post")
-                        .WithMany("Reactions")
+                        .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -680,7 +683,7 @@ namespace TheBloggest.Migrations
                     b.HasOne("TheBloggest.Data.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Post");
@@ -707,8 +710,6 @@ namespace TheBloggest.Migrations
                     b.Navigation("PostCategories");
 
                     b.Navigation("PostTags");
-
-                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("TheBloggest.Data.Models.Tag", b =>

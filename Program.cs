@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TheBloggest.Components;
 using TheBloggest.Components.Account;
 using TheBloggest.Data;
+using TheBloggest.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

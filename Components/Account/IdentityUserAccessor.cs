@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using TheBloggest.Data;
+using TheBloggest.Data.Models;
 
 namespace TheBloggest.Components.Account
 {
