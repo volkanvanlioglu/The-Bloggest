@@ -7,7 +7,7 @@ using TheBloggest.Data.Models;
 namespace TheBloggest.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [Authorize(Roles = "Admin")]
     public class AuditLogsController : ControllerBase
     {

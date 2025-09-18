@@ -7,7 +7,7 @@ using TheBloggest.Data.Models;
 namespace TheBloggest.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     public class TagsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

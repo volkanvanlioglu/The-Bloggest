@@ -11,7 +11,7 @@ namespace TheBloggest.Services
         public AuditLogsService(HttpClient http) => _http = http;
 
         public async Task<IEnumerable<AuditLogs>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<AuditLogs>>(baseUrl) ?? [];
+            await _http.GetFromJsonAsync<IEnumerable<AuditLogs>>($"{baseUrl}/Get") ?? [];
 
         public async Task<AuditLogs?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<AuditLogs>($"{baseUrl}/{id}");

@@ -1,5 +1,123 @@
-﻿<h3>PostDetails</h3>
+﻿@* @page "/Posts/{id:int}"
+@using TheBloggest.Interfaces
+@using TheBloggest.Data.Models
+@using TheBloggest.Services
+@inject IPostService PostService
 
 @code {
+    [Parameter] public int Id { get; set; }
 
+    private Post? post;
+    private bool isLoading = true;
+
+    private Comment newComment = new() { AuthorName = "", Content = "" };
+    private bool isSubmitting;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        post = await PostService.GetPostByIdAsync(Id);
+        isLoading = false;
+    }
+
+    private async Task SubmitCommentAsync()
+    {
+        if (post is null || string.IsNullOrWhiteSpace(newComment.AuthorName) || string.IsNullOrWhiteSpace(newComment.Content))
+            return;
+
+        isSubmitting = true;
+        await PostService.AddCommentAsync(post.Id, new Comment
+        {
+            AuthorName = newComment.AuthorName.Trim(),
+            Content = newComment.Content.Trim()
+        });
+
+        // Refresh from service to reflect latest state
+        post = await PostService.GetPostByIdAsync(post.Id);
+        newComment = new Comment();
+        isSubmitting = false;
+        StateHasChanged();
+    }
 }
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            @if (isLoading)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-secondary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (post is null)
+            {
+                <div class="alert alert-warning">Post not found.</div>
+            }
+            else
+            {
+                <article class="mb-5">
+                    <header class="mb-3">
+                        <h1 class="display-6 fw-semibold">@post.Title</h1>
+                        <div class="text-muted">
+                            By <strong>@post.Author.DisplayName</strong>
+                            <span class="mx-2">•</span>
+                            <span>@post.PublishedAt.ToString("MMM d, yyyy")</span>
+                        </div>
+                    </header>
+                    <div class="fs-5 lh-lg">
+                        @post.Content
+                    </div>
+                </article>
+
+                <section class="mt-5">
+                    <h2 class="h4 mb-3">Comments</h2>
+
+                    @if (post.Comments?.Count > 0)
+                    {
+                        <div class="list-group mb-4">
+                            @foreach (var c in post.Comments.OrderByDescending(c => c.CreatedAt))
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>@c.AuthorName</strong>
+                                        <span class="text-muted small">@c.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                                    </div>
+                                    <div>@c.Content</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border">No comments yet. Be the first to comment!</div>
+                    }
+
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Add a comment</h3>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <input class="form-control" placeholder="Your name" @bind="newComment.AuthorName" />
+                                </div>
+                                <div class="col-12">
+                                    <textarea class="form-control" rows="4" placeholder="Your comment" @bind="newComment.Content"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-primary" @onclick="SubmitCommentAsync" disabled="@isSubmitting">
+                                        @if (isSubmitting)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        }
+                                        Submit Comment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+        </div>
+    </div>
+</div> *@

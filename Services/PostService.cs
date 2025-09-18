@@ -6,12 +6,12 @@ namespace TheBloggest.Services
     public class PostService : IPostService
     {
         private readonly HttpClient _http;
-        private const string baseUrl = "api/posts";
+        private const string baseUrl = "api/Posts";
 
         public PostService(HttpClient http) => _http = http;
 
         public async Task<IEnumerable<Post>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<Post>>(baseUrl) ?? [];
+            await _http.GetFromJsonAsync<IEnumerable<Post>>($"{baseUrl}/GetPosts") ?? [];
 
         public async Task<Post?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<Post>($"{baseUrl}/{id}");

@@ -1,0 +1,139 @@
+@* @page "/User/Posts"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using TheBloggest.Data.Models
+@using TheBloggest.Services
+@using TheBloggest.Interfaces
+@attribute [Authorize(Roles = "User,Admin")]
+@inject IPostService PostService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>My Posts</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Posts</h2>
+                <a href="/User/Posts/New" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Post
+                </a>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (posts == null || !posts.Any())
+            {
+                <div class="alert alert-info">
+                    <h4>No posts found</h4>
+                    <p>You haven't created any posts yet. <a href="/User/Posts/New">Create your first post</a> to get started!</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Title</th>
+                                <th>Published Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var post in posts)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@post.Title</strong>
+                                        @if (!string.IsNullOrEmpty(post.Excerpt))
+                                        {
+                                            <br />
+                                            <small class="text-muted">@post.Excerpt</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (post.PublishedAt.HasValue)
+                                        {
+                                            @post.PublishedAt.Value.ToString("MMM dd, yyyy")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not published</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (post.IsPublished)
+                                        {
+                                            <span class="badge bg-success">Published</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Draft</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/User/Posts/Edit/@post.Id" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => DeletePost(post.Id)" 
+                                                    @onclick:preventDefault="true">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<Posts>? posts;
+    private bool isLoading = true;
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            await LoadPosts();
+        }
+        
+        isLoading = false;
+    }
+
+    private async Task LoadPosts()
+    {
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            posts = await PostService.GetPostsByAuthorAsync(currentUserId);
+        }
+    }
+
+    private async Task DeletePost(int postId)
+    {
+        if (await PostService.DeleteAsync(postId))
+        {
+            await LoadPosts();
+            StateHasChanged();
+        }
+    }
+} *@

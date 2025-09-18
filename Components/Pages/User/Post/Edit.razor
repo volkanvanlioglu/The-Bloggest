@@ -1,0 +1,331 @@
+﻿@page "/User/Posts/Edit/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using TheBloggest.Data.Models
+@using TheBloggest.Services
+@using TheBloggest.Interfaces
+@attribute [Authorize(Roles = "User,Admin")]
+@inject IPostService PostService
+@inject ICategoryService CategoryService
+@inject ITagService TagService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Post</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Edit Post</h2>
+                <a href="/User/Posts" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Posts
+                </a>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (post == null)
+            {
+                <div class="alert alert-danger">
+                    <h4>Post not found</h4>
+                    <p>The post you're looking for doesn't exist or you don't have permission to edit it.</p>
+                    <a href="/User/Posts" class="btn btn-primary">Back to My Posts</a>
+                </div>
+            }
+            else if (!canEdit)
+            {
+                <div class="alert alert-warning">
+                    <h4>Access Denied</h4>
+                    <p>You can only edit posts that you created, unless you have admin privileges.</p>
+                    <a href="/User/Posts" class="btn btn-primary">Back to My Posts</a>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <EditForm Model="post" OnValidSubmit="HandleSubmit">
+                                    <DataAnnotationsValidator />
+                                    
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                                        <InputText id="title" class="form-control" @bind-Value="post.Title" placeholder="Enter post title" />
+                                        <ValidationMessage For="@(() => post.Title)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                                        <InputTextArea id="content" class="form-control" @bind-Value="post.Content" 
+                                                       rows="15" placeholder="Write your post content here..." />
+                                        <ValidationMessage For="@(() => post.Content)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="excerpt" class="form-label">Excerpt</label>
+                                        <InputTextArea id="excerpt" class="form-control" @bind-Value="post.Excerpt" 
+                                                       rows="3" placeholder="Brief description of your post (optional)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="coverImageUrl" class="form-label">Cover Image URL</label>
+                                        <InputText id="coverImageUrl" class="form-control" @bind-Value="post.CoverImageUrl" 
+                                                   placeholder="https://example.com/image.jpg" />
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="category" class="form-label">Category</label>
+                                                <InputSelect id="category" class="form-select" @bind-Value="selectedCategoryId">
+                                                    <option value="">Select a category</option>
+                                                    @foreach (var category in categories)
+                                                    {
+                                                        <option value="@category.Id">@category.Name</option>
+                                                    }
+                                                </InputSelect>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="tags" class="form-label">Tags</label>
+                                                <InputSelect id="tags" class="form-select" @bind-Value="selectedTagIds" multiple>
+                                                    @foreach (var tag in tags)
+                                                    {
+                                                        <option value="@tag.Id">@tag.Name</option>
+                                                    }
+                                                </InputSelect>
+                                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple tags</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <InputCheckbox id="isPublished" class="form-check-input" @bind-Value="post.IsPublished" />
+                                            <label class="form-check-label" for="isPublished">
+                                                Published
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">Check to publish the post, uncheck to save as draft.</small>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                            @if (isSubmitting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            }
+                                            Update Post
+                                        </button>
+                                        <a href="/User/Posts" class="btn btn-secondary">Cancel</a>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Post Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <div>
+                                        @if (post.IsPublished)
+                                        {
+                                            <span class="badge bg-success">Published</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Draft</span>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Author</label>
+                                    <div class="text-muted">@currentUserEmail</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Created</label>
+                                    <div class="text-muted">@post.CreatedAt.ToString("MMM dd, yyyy HH:mm")</div>
+                                </div>
+                                
+                                @if (post.UpdatedAt.HasValue)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label">Last Updated</label>
+                                        <div class="text-muted">@post.UpdatedAt.Value.ToString("MMM dd, yyyy HH:mm")</div>
+                                    </div>
+                                }
+                                
+                                @if (post.PublishedAt.HasValue)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label">Published</label>
+                                        <div class="text-muted">@post.PublishedAt.Value.ToString("MMM dd, yyyy HH:mm")</div>
+                                    </div>
+                                }
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Views</label>
+                                    <div class="text-muted">@post.ViewCount</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    
+    private Post? post;
+    private List<Category> categories = new();
+    private List<Tag> tags = new();
+    private int? selectedCategoryId;
+    private List<int> selectedTagIds = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool canEdit = false;
+    private string? currentUserId;
+    private string? currentUserEmail;
+    private bool isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        currentUserEmail = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        isAdmin = authState.User?.IsInRole("Admin") ?? false;
+
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            await LoadData();
+        }
+        
+        isLoading = false;
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            // Load post data
+            post = await PostService.GetByIdAsync(Id);
+            
+            if (post != null)
+            {
+                // Check if user can edit this post (author or admin)
+                canEdit = post.AuthorId == currentUserId || isAdmin;
+                
+                if (canEdit)
+                {
+                    // Load categories and tags
+                    var categoriesTask = CategoryService.GetAllAsync();
+                    var tagsTask = TagService.GetAllAsync();
+                    
+                    await Task.WhenAll(categoriesTask, tagsTask);
+                    
+                    categories = categoriesTask.Result.ToList();
+                    tags = tagsTask.Result.ToList();
+                    
+                    // Set current selections (this would need additional API calls to get post categories/tags)
+                    // For now, we'll leave them empty
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a toast notification
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (post == null || !canEdit)
+        {
+            return;
+        }
+
+        isSubmitting = true;
+        
+        try
+        {
+            // Update timestamp
+            post.UpdatedAt = DateTime.UtcNow;
+            
+            // Set published date if being published for the first time
+            if (post.IsPublished && !post.PublishedAt.HasValue)
+            {
+                post.PublishedAt = DateTime.UtcNow;
+            }
+            // Clear published date if being unpublished
+            else if (!post.IsPublished && post.PublishedAt.HasValue)
+            {
+                post.PublishedAt = null;
+            }
+
+            // Update slug if title changed
+            post.Slug = GenerateSlug(post.Title);
+
+            // Update the post
+            var success = await PostService.UpdateAsync(post.Id, post);
+            
+            if (success)
+            {
+                // TODO: Handle category and tag associations
+                // This would require additional API endpoints or service methods
+                
+                Navigation.NavigateTo("/User/Posts");
+            }
+            else
+            {
+                // Handle error - could show a toast notification
+                Console.WriteLine("Failed to update post");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a toast notification
+            Console.WriteLine($"Error updating post: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string GenerateSlug(string title)
+    {
+        if (string.IsNullOrEmpty(title))
+            return string.Empty;
+
+        return title.ToLowerInvariant()
+            .Replace(" ", "-")
+            .Replace("'", "")
+            .Replace("\"", "")
+            .Replace("?", "")
+            .Replace("!", "")
+            .Replace(".", "")
+            .Replace(",", "")
+            .Replace(":", "")
+            .Replace(";", "");
+    }
+}

@@ -1,5 +1,74 @@
-﻿<h3>Index</h3>
+﻿@page "/Posts"
+@using TheBloggest.Data.Models
+@using TheBloggest.Interfaces
+@using TheBloggest.Services
+@inject IPostService PostService
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold">TheBloggest</h1>
+                <p class="lead text-muted">Fresh stories, ideas, and insights from our community.</p>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-secondary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (posts is null || posts.Count() == 0)
+            {
+                <div class="alert alert-light border text-center" role="alert">
+                    No posts yet. Check back soon!
+                </div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var post in posts)
+                    {
+                        <div class="list-group-item px-0 py-4">
+                            <div class="d-flex flex-column gap-2">
+                                <h2 class="h3 mb-1">
+                                    <a class="text-decoration-none" href="/post/@post.Id">@post.Title</a>
+                                </h2>
+                                <div class="text-muted small">
+                                    <span class="me-2">By <strong>@post.Author.DisplayName</strong></span>
+                                    <span class="me-2">•</span>
+                                    <span>@post.PublishedAt!.Value.ToString("dd.MM.yyyy")</span>
+                                </div>
+                                <p class="mb-2 text-secondary">@Shorten(post.Content, 200)</p>
+                                <div>
+                                    <a class="btn btn-sm btn-outline-primary" href="/Posts/@post.Id">Read more</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
+    private IEnumerable<Post>? posts;
+    private bool isLoading = true;
 
+    protected override async Task OnInitializedAsync()
+    {
+        posts = await PostService.GetAllAsync();
+        isLoading = false;
+    }
+
+    private static string Shorten(string? content, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return string.Empty;
+        var text = content.Replace("\r", string.Empty).Replace("\n", " ");
+        if (text.Length <= maxLength) return text;
+        return text.Substring(0, maxLength).TrimEnd() + "…";
+    }
 }

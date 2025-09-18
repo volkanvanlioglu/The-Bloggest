@@ -34,6 +34,11 @@
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.DisplayName" id="Input.DisplayName" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <label for="Input.DisplayName">Display Name</label>
+                <ValidationMessage For="() => Input.DisplayName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
                 <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
                 <label for="Input.Password">Password</label>
                 <ValidationMessage For="() => Input.Password" class="text-danger" />
@@ -69,8 +74,9 @@
     public async Task RegisterUser(EditContext editContext)
     {
         var user = CreateUser();
+        string userName = Input.DisplayName;
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+        await UserStore.SetUserNameAsync(user, userName, CancellationToken.None);
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         var result = await UserManager.CreateAsync(user, Input.Password);
@@ -78,6 +84,14 @@
         if (!result.Succeeded)
         {
             identityErrors = result.Errors;
+            return;
+        }
+
+        // Add user to "User" role
+        var roleResult = await UserManager.AddToRoleAsync(user, "User");
+        if (!roleResult.Succeeded)
+        {
+            identityErrors = roleResult.Errors;
             return;
         }
 
@@ -131,6 +145,10 @@
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Display Name")]
+        public string DisplayName { get; set; }
 
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]

@@ -1,5 +1,55 @@
-﻿<h3>Contact</h3>
+﻿@page "/Contact"
 
-@code {
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            <h1 class="h2 mb-4 text-center">Contact Us</h1>
 
-}
+            <div class="row g-4">
+                <div class="col-md-7">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label" for="contactName">Name</label>
+                                    <input id="contactName" class="form-control" type="text" placeholder="Your name" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="contactEmail">Email</label>
+                                    <input id="contactEmail" class="form-control" type="email" placeholder="you@example.com" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="contactMessage">Message</label>
+                                    <textarea id="contactMessage" class="form-control" rows="6" placeholder="How can we help?"></textarea>
+                                </div>
+
+                                <button type="button" class="btn btn-primary">
+                                    Submit
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h5 mb-3">Contact Details</h2>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><strong>Address:</strong> 123 Placeholder St, Your City</li>
+                                <li class="mb-2"><strong>Phone:</strong> (000) 000-0000</li>
+                                <li class="mb-2"><strong>Email:</strong> hello@thebloggest.example</li>
+                            </ul>
+                            <p class="text-muted small mb-0">
+                                Replace these with your real contact details later.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

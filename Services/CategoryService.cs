@@ -11,7 +11,7 @@ namespace TheBloggest.Services
         public CategoryService(HttpClient http) => _http = http;
 
         public async Task<IEnumerable<Category>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<Category>>(baseUrl) ?? [];
+            await _http.GetFromJsonAsync<IEnumerable<Category>>($"{baseUrl}/Get") ?? [];
 
         public async Task<Category?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<Category>($"{baseUrl}/{id}");

@@ -11,7 +11,7 @@ namespace TheBloggest.Services
         public TagService(HttpClient http) => _http = http;
 
         public async Task<IEnumerable<Tag>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<Tag>>(baseUrl) ?? [];
+            await _http.GetFromJsonAsync<IEnumerable<Tag>>($"{baseUrl}/Get") ?? [];
 
         public async Task<Tag?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<Tag>($"{baseUrl}/{id}");
