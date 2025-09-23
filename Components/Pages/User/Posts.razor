@@ -1,4 +1,4 @@
-@* @page "/User/Posts"
+@page "/User/Posts"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using TheBloggest.Data.Models
@@ -43,6 +43,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Title</th>
+                                <th>Image</th>
                                 <th>Published Date</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -58,6 +59,13 @@
                                         {
                                             <br />
                                             <small class="text-muted">@post.Excerpt</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(post.CoverImageUrl))
+                                        {
+                                            <br />
+                                            <img url="@post.CoverImageUrl" alt="@post.Excerpt" width="400" height="200" />
                                         }
                                     </td>
                                     <td>
@@ -103,7 +111,7 @@
 </div>
 
 @code {
-    private IEnumerable<Posts>? posts;
+    private IEnumerable<TheBloggest.Data.Models.Post>? posts;
     private bool isLoading = true;
     private string? currentUserId;
 
@@ -136,4 +144,4 @@
             StateHasChanged();
         }
     }
-} *@
+}

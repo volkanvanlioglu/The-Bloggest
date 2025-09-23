@@ -17,7 +17,7 @@ namespace TheBloggest.Extensions
                     });
 
             // Reuse generic method to register each service
-            services.AddApiClient<IPostService, PostService>();
+            //services.AddApiClient<IPostService, PostService>();
             services.AddApiClient<ICategoryService, CategoryService>();
             services.AddApiClient<ITagService, TagService>();
             services.AddApiClient<ICommentService, CommentService>();

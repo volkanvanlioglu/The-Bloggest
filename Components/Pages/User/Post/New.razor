@@ -1,15 +1,17 @@
 ﻿@page "/User/Posts/New"
+@using BlazorBootstrap
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using TheBloggest.Data.Models
-@using TheBloggest.Services
 @using TheBloggest.Interfaces
 @attribute [Authorize(Roles = "User,Admin")]
-@inject IPostService PostService
+@* @inject IPostService PostService *@
+@inject PostService PostService
 @inject ICategoryService CategoryService
 @inject ITagService TagService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <PageTitle>Create New Post</PageTitle>
 
@@ -37,9 +39,10 @@
                     <div class="col-lg-8">
                         <div class="card">
                             <div class="card-body">
-                                <EditForm Model="newPost" OnValidSubmit="HandleSubmit">
+                                <EditForm Model="@newPost" OnValidSubmit="ShowDialogAsync">
                                     <DataAnnotationsValidator />
-                                    
+                                    <ValidationSummary />
+
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
                                         <InputText id="title" class="form-control" @bind-Value="newPost.Title" placeholder="Enter post title" />
@@ -48,20 +51,23 @@
 
                                     <div class="mb-3">
                                         <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
-                                        <InputTextArea id="content" class="form-control" @bind-Value="newPost.Content" 
-                                                       rows="15" placeholder="Write your post content here..." />
+                                        <InputTextArea id="content" class="form-control"
+                                                       @bind-Value="newPost.Content" rows="10"
+                                                       placeholder="Write your post content here..." />
                                         <ValidationMessage For="@(() => newPost.Content)" />
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="excerpt" class="form-label">Excerpt</label>
-                                        <InputTextArea id="excerpt" class="form-control" @bind-Value="newPost.Excerpt" 
-                                                       rows="3" placeholder="Brief description of your post (optional)" />
+                                        <InputTextArea id="excerpt" class="form-control"
+                                                       @bind-Value="newPost.Excerpt" rows="3"
+                                                       placeholder="Brief description (optional)" />
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="coverImageUrl" class="form-label">Cover Image URL</label>
-                                        <InputText id="coverImageUrl" class="form-control" @bind-Value="newPost.CoverImageUrl" 
+                                        <InputText id="coverImageUrl" class="form-control"
+                                                   @bind-Value="newPost.CoverImageUrl"
                                                    placeholder="https://example.com/image.jpg" />
                                     </div>
 
@@ -69,7 +75,7 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="category" class="form-label">Category</label>
-                                                <InputSelect id="category" class="form-select" @bind-Value="selectedCategoryId">
+                                                <InputSelect id="category" class="form-select" @bind-value="selectedCategoryId">
                                                     <option value="">Select a category</option>
                                                     @foreach (var category in categories)
                                                     {
@@ -81,7 +87,7 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="tags" class="form-label">Tags</label>
-                                                <InputSelect id="tags" class="form-select" @bind-Value="selectedTagIds" multiple>
+                                                <InputSelect id="tags" class="form-select" @bind-value="selectedTagIds" multiple>
                                                     @foreach (var tag in tags)
                                                     {
                                                         <option value="@tag.Id">@tag.Name</option>
@@ -92,14 +98,9 @@
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <div class="form-check">
-                                            <InputCheckbox id="publishNow" class="form-check-input" @bind-Value="publishNow" />
-                                            <label class="form-check-label" for="publishNow">
-                                                Publish Now
-                                            </label>
-                                        </div>
-                                        <small class="form-text text-muted">If checked, the post will be published immediately. Otherwise, it will be saved as a draft.</small>
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="publishNow" class="form-check-input" @bind-Value="publishNow" />
+                                        <label class="form-check-label" for="publishNow">Publish Now</label>
                                     </div>
 
                                     <div class="d-flex gap-2">
@@ -113,10 +114,11 @@
                                         <a href="/User/Posts" class="btn btn-secondary">Cancel</a>
                                     </div>
                                 </EditForm>
+
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-lg-4">
                         <div class="card">
                             <div class="card-header">
@@ -136,12 +138,12 @@
                                         }
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Author</label>
                                     <div class="text-muted">@currentUserEmail</div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Created</label>
                                     <div class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
@@ -155,8 +157,14 @@
     </div>
 </div>
 
+<ConfirmDialog @ref="dialog" />
+
 @code {
-    private Post newPost = new();
+    //[SupplyParameterFromForm(FormName = "newPostBlog")]
+    private Post? newPost { get; set; } = new();
+    private EditContext? editContext;
+    private bool hasChanges = false;
+
     private List<Category> categories = new();
     private List<Tag> tags = new();
     private int? selectedCategoryId;
@@ -167,17 +175,30 @@
     private string? currentUserId;
     private string? currentUserEmail;
 
+    private ConfirmDialog dialog = default!;
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    private void editContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        if (!hasChanges) hasChanges = true;
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        editContext = new(newPost);
+        editContext.OnFieldChanged += editContext_OnFieldChanged;
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         currentUserEmail = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        newPost ??= new();
 
         if (!string.IsNullOrEmpty(currentUserId))
         {
             await LoadData();
         }
-        
+
         isLoading = false;
     }
 
@@ -187,9 +208,9 @@
         {
             var categoriesTask = CategoryService.GetAllAsync();
             var tagsTask = TagService.GetAllAsync();
-            
+
             await Task.WhenAll(categoriesTask, tagsTask);
-            
+
             categories = categoriesTask.Result.ToList();
             tags = tagsTask.Result.ToList();
         }
@@ -208,14 +229,14 @@
         }
 
         isSubmitting = true;
-        
+
         try
         {
             // Set post properties
             newPost.AuthorId = currentUserId;
             newPost.IsPublished = publishNow;
             newPost.CreatedAt = DateTime.UtcNow;
-            
+
             if (publishNow)
             {
                 newPost.PublishedAt = DateTime.UtcNow;
@@ -226,23 +247,28 @@
 
             // Create the post
             var createdPost = await PostService.CreateAsync(newPost);
-            
+
             if (createdPost != null)
             {
                 // TODO: Handle category and tag associations
                 // This would require additional API endpoints or service methods
-                
+
+                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Added Successfully!", newPost.CreatedAt.ToString(), $"Map (production) added successfully on {newPost.CreatedAt}", true));
+
+                await Task.Delay(3000);
                 Navigation.NavigateTo("/User/Posts");
             }
             else
             {
                 // Handle error - could show a toast notification
+                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", newPost.CreatedAt.ToString(), $"An error occurred during map (production) addition on {newPost.CreatedAt}", true));
                 Console.WriteLine("Failed to create post");
             }
         }
         catch (Exception ex)
         {
             // Handle error - could show a toast notification
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during map (production) addition on {DateTime.UtcNow}", true));
             Console.WriteLine($"Error creating post: {ex.Message}");
         }
         finally
@@ -266,5 +292,22 @@
             .Replace(",", "")
             .Replace(":", "")
             .Replace(";", "");
+    }
+
+    private async Task ShowSavingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Light, "Saving...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
+        await HandleSubmit();
+    }
+
+    private async Task ShowDialogAsync()
+    {
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(title: "Are you sure?", message1: "Are you sure to add the post?", confirmDialogOptions: options);
+
+        if (confirmation) await ShowSavingDataAsync();
+        else { }
     }
 }

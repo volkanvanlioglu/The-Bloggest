@@ -2,13 +2,14 @@
 @using TheBloggest.Data.Models
 @using TheBloggest.Interfaces
 @using TheBloggest.Services
-@inject IPostService PostService
+@* @inject IPostService PostService *@
+@inject PostService PostService
 
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="text-center mb-5">
-                <h1 class="display-5 fw-bold">TheBloggest</h1>
+                <h1 class="display-5 fw-bold">The Bloggest</h1>
                 <p class="lead text-muted">Fresh stories, ideas, and insights from our community.</p>
             </div>
 
@@ -36,8 +37,20 @@
                                 <h2 class="h3 mb-1">
                                     <a class="text-decoration-none" href="/post/@post.Id">@post.Title</a>
                                 </h2>
+                                <div>
+                                    @if (!string.IsNullOrEmpty(post.CoverImageUrl))
+                                    {
+                                        <br />
+                                        <a href="/post/@post.Id"><img src="@post.CoverImageUrl" alt="@post.Excerpt" style="width: auto; height:auto;" /></a>
+                                    }
+                                    else
+                                    {
+                                        <br />
+                                        <a href="/post/@post.Id"><img src="images/no_image.png" alt="@post.Excerpt" style="width: auto; height:auto;" /></a>
+                                    }
+                                </div>
                                 <div class="text-muted small">
-                                    <span class="me-2">By <strong>@post.Author.DisplayName</strong></span>
+                                    <span class="me-2">By <strong>@post.AuthorId</strong></span>
                                     <span class="me-2">•</span>
                                     <span>@post.PublishedAt!.Value.ToString("dd.MM.yyyy")</span>
                                 </div>

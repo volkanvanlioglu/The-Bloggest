@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace TheBloggest.Data.Models
 {
@@ -9,7 +11,6 @@ namespace TheBloggest.Data.Models
         [Required, MaxLength(200)]
         public string Title { get; set; }
 
-        [Required]
         public string Slug { get; set; }
 
         [Required]
@@ -26,11 +27,25 @@ namespace TheBloggest.Data.Models
 
         // Relationships
         public string AuthorId { get; set; }
+
+        [JsonIgnore]
+        [ValidateNever]
         public ApplicationUser Author { get; set; }
 
+        [JsonIgnore]
+        [ValidateNever]
         public ICollection<PostCategory> PostCategories { get; set; }
+
+        [JsonIgnore]
+        [ValidateNever]
         public ICollection<PostTag> PostTags { get; set; }
+
+        [JsonIgnore]
+        [ValidateNever]
         public ICollection<Comment> Comments { get; set; }
+
+        [JsonIgnore]
+        [ValidateNever]
         public ICollection<Reaction> Reactions { get; set; }
     }
 }

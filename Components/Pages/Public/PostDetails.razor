@@ -1,7 +1,8 @@
-﻿@* @page "/Posts/{id:int}"
+﻿@page "/Posts/{id:int}"
 @using TheBloggest.Interfaces
 @using TheBloggest.Data.Models
 @using TheBloggest.Services
+@inject ICommentService CommentService
 @inject IPostService PostService
 
 @code {
@@ -16,7 +17,7 @@
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
-        post = await PostService.GetPostByIdAsync(Id);
+        post = await PostService.GetByIdAsync(Id);
         isLoading = false;
     }
 
@@ -26,14 +27,16 @@
             return;
 
         isSubmitting = true;
-        await PostService.AddCommentAsync(post.Id, new Comment
+        await CommentService.CreateAsync(new Comment
         {
             AuthorName = newComment.AuthorName.Trim(),
-            Content = newComment.Content.Trim()
+            Content = newComment.Content.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            PostId = post.Id
         });
 
         // Refresh from service to reflect latest state
-        post = await PostService.GetPostByIdAsync(post.Id);
+        post = await PostService.GetByIdAsync(post.Id);
         newComment = new Comment();
         isSubmitting = false;
         StateHasChanged();
@@ -63,7 +66,7 @@
                         <div class="text-muted">
                             By <strong>@post.Author.DisplayName</strong>
                             <span class="mx-2">•</span>
-                            <span>@post.PublishedAt.ToString("MMM d, yyyy")</span>
+                            <span>@post.PublishedAt.ToString()</span>
                         </div>
                     </header>
                     <div class="fs-5 lh-lg">
@@ -120,4 +123,4 @@
             }
         </div>
     </div>
-</div> *@
+</div>
