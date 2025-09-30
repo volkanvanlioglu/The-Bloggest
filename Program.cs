@@ -1,3 +1,4 @@
+using BlazorBootstrap;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +25,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddBlogServices();
+
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient<PostService>(client =>
+builder.Services.AddHttpClient<IUserService, UserService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7139/"); // your API base URL
 });
@@ -47,6 +50,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 builder.Services.AddBlazorBootstrap();
+
+builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<PreloadService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

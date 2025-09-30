@@ -10,8 +10,8 @@ namespace TheBloggest.Services
 
         public MediaLibraryService(HttpClient http) => _http = http;
 
-        public async Task<IEnumerable<MediaLibrary>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<MediaLibrary>>($"{baseUrl}/Get") ?? [];
+        public async Task<List<MediaLibrary>> GetAllAsync() =>
+            await _http.GetFromJsonAsync<List<MediaLibrary>>($"{baseUrl}/Get") ?? [];
 
         public async Task<MediaLibrary?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<MediaLibrary>($"{baseUrl}/{id}");

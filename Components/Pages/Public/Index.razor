@@ -1,9 +1,7 @@
 ﻿@page "/Posts"
-@using TheBloggest.Data.Models
-@using TheBloggest.Interfaces
-@using TheBloggest.Services
-@* @inject IPostService PostService *@
-@inject PostService PostService
+@inject IPostService PostService
+@inject IUserService UserService
+@rendermode InteractiveServer
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -13,15 +11,16 @@
                 <p class="lead text-muted">Fresh stories, ideas, and insights from our community.</p>
             </div>
 
-            @if (isLoading)
+            @* @if (isLoading)
             {
-                <div class="text-center py-5">
-                    <div class="spinner-border text-secondary" role="status">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-2">Loading posts...</p>
                 </div>
-            }
-            else if (posts is null || posts.Count() == 0)
+            } *@
+            @if (posts == null || !posts.Any())
             {
                 <div class="alert alert-light border text-center" role="alert">
                     No posts yet. Check back soon!
@@ -29,52 +28,75 @@
             }
             else
             {
-                <div class="list-group list-group-flush">
-                    @foreach (var post in posts)
-                    {
-                        <div class="list-group-item px-0 py-4">
-                            <div class="d-flex flex-column gap-2">
-                                <h2 class="h3 mb-1">
-                                    <a class="text-decoration-none" href="/post/@post.Id">@post.Title</a>
-                                </h2>
-                                <div>
-                                    @if (!string.IsNullOrEmpty(post.CoverImageUrl))
-                                    {
-                                        <br />
-                                        <a href="/post/@post.Id"><img src="@post.CoverImageUrl" alt="@post.Excerpt" style="width: auto; height:auto;" /></a>
-                                    }
-                                    else
-                                    {
-                                        <br />
-                                        <a href="/post/@post.Id"><img src="images/no_image.png" alt="@post.Excerpt" style="width: auto; height:auto;" /></a>
-                                    }
-                                </div>
-                                <div class="text-muted small">
-                                    <span class="me-2">By <strong>@post.AuthorId</strong></span>
-                                    <span class="me-2">•</span>
-                                    <span>@post.PublishedAt!.Value.ToString("dd.MM.yyyy")</span>
-                                </div>
-                                <p class="mb-2 text-secondary">@Shorten(post.Content, 200)</p>
-                                <div>
-                                    <a class="btn btn-sm btn-outline-primary" href="/Posts/@post.Id">Read more</a>
-                                </div>
-                            </div>
+                <div class="row g-4">
+                    <Virtualize TItem="Post" Items="posts" Context="post" OverscanCount="3" SpacerElement="div">
+                        <div class="col-sm-12 col-md-6 col-lg-4">
+                            <Card Class="h-100 shadow-sm">
+                                <a href="@($"/Posts/{post.Id}")"><img src="@((!string.IsNullOrEmpty(post.CoverImageUrl) && post.CoverImageUrl.CompareTo("https://example.com/image.jpg") != 0) ? post.CoverImageUrl : "/images/no_image.png")" class="card-img-top img-fluid" alt="@post.Title" style="height: 200px; object-fit: cover;" /></a>
+                                <CardBody Class="d-flex flex-column">
+                                    <CardTitle Class="h5 mb-2">
+                                        <a class="text-decoration-none text-dark" href="@($"/Posts/{post.Id}")">@post.Title</a>
+                                    </CardTitle>
+                                    <div class="text-muted small mb-2">
+                                        <span class="me-2">
+                                            By <strong><a href="@($"/Authors/{post.AuthorId}")">@(authorCache.TryGetValue(post.AuthorId, out var author) ? author.DisplayName : "Unknown")</a></strong>
+                                        </span>
+                                        <span class="me-2">•</span>
+                                        <span>@post.PublishedAt!.Value.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                    <CardText Class="text-secondary flex-grow-1">
+                                        @((MarkupString)Shorten(post.Content, 150))
+                                    </CardText>
+                                    <div class="mt-auto">
+                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" To="@($"/Posts/{post.Id}")" Type="ButtonType.Link">
+                                            Read More
+                                        </Button>
+                                    </div>
+                                </CardBody>
+                            </Card>
                         </div>
-                    }
+                    </Virtualize>
                 </div>
             }
         </div>
     </div>
 </div>
 
+<Preload LoadingText="Loading..."></Preload>
+
 @code {
-    private IEnumerable<Post>? posts;
-    private bool isLoading = true;
+    private List<Post>? posts;
+    //private bool isLoading = true;
+
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+
+    private Dictionary<string, ApplicationUser> authorCache = new();
 
     protected override async Task OnInitializedAsync()
     {
         posts = await PostService.GetAllAsync();
-        isLoading = false;
+
+        // Get unique author IDs
+        var authorIds = posts.Select(p => p.AuthorId).Distinct().ToList();
+
+        // Fetch and cache authors
+        foreach (var authorId in authorIds)
+        {
+            if (!authorCache.ContainsKey(authorId))
+            {
+                var author = await UserService.GetByIdAsync(Guid.Parse(authorId));
+                if (author != null)
+                    authorCache[authorId] = author;
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ShowLoadingDataAsync();
+        }
     }
 
     private static string Shorten(string? content, int maxLength)
@@ -83,5 +105,12 @@
         var text = content.Replace("\r", string.Empty).Replace("\n", " ");
         if (text.Length <= maxLength) return text;
         return text.Substring(0, maxLength).TrimEnd() + "…";
+    }
+
+    private async Task ShowLoadingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Primary, "Loading...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
     }
 }

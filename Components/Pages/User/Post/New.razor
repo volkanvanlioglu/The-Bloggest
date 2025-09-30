@@ -1,12 +1,6 @@
 ﻿@page "/User/Posts/New"
-@using BlazorBootstrap
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using TheBloggest.Data.Models
-@using TheBloggest.Interfaces
 @attribute [Authorize(Roles = "User,Admin")]
-@* @inject IPostService PostService *@
-@inject PostService PostService
+@inject IPostService PostService
 @inject ICategoryService CategoryService
 @inject ITagService TagService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -158,6 +152,7 @@
 </div>
 
 <ConfirmDialog @ref="dialog" />
+<Toasts class="p-3" Messages="messages" Delay="3000" Placement="ToastsPlacement.TopRight" />
 
 @code {
     //[SupplyParameterFromForm(FormName = "newPostBlog")]
@@ -178,6 +173,7 @@
     private ConfirmDialog dialog = default!;
     [Inject] protected PreloadService PreloadService { get; set; } = default!;
     [Inject] protected ToastService ToastService { get; set; } = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
 
     private void editContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
     {
@@ -262,6 +258,7 @@
             {
                 // Handle error - could show a toast notification
                 ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", newPost.CreatedAt.ToString(), $"An error occurred during map (production) addition on {newPost.CreatedAt}", true));
+                await Task.Delay(3000);
                 Console.WriteLine("Failed to create post");
             }
         }
@@ -269,6 +266,7 @@
         {
             // Handle error - could show a toast notification
             ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during map (production) addition on {DateTime.UtcNow}", true));
+            await Task.Delay(3000);
             Console.WriteLine($"Error creating post: {ex.Message}");
         }
         finally
@@ -310,4 +308,14 @@
         if (confirmation) await ShowSavingDataAsync();
         else { }
     }
+
+    private void ShowMessage(ToastType toastType, string title, string helpText, string message) => messages.Add(CreateToastMessage(toastType, title, helpText, message));
+
+    private ToastMessage CreateToastMessage(ToastType toastType, string title, string helpText, string message) => new ToastMessage
+    {
+        Type = toastType,
+        Title = title,
+        HelpText = helpText,
+        Message = message,
+    };
 }

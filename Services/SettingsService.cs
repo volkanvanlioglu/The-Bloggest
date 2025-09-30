@@ -10,8 +10,8 @@ namespace TheBloggest.Services
 
         public SettingsService(HttpClient http) => _http = http;
 
-        public async Task<IEnumerable<Settings>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<Settings>>($"{baseUrl}/Get") ?? [];
+        public async Task<List<Settings>> GetAllAsync() =>
+            await _http.GetFromJsonAsync<List<Settings>>($"{baseUrl}/Get") ?? [];
 
         public async Task<Settings?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<Settings>($"{baseUrl}/{id}");

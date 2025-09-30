@@ -1,9 +1,109 @@
 ﻿@page "/Posts/{id:int}"
-@using TheBloggest.Interfaces
-@using TheBloggest.Data.Models
-@using TheBloggest.Services
 @inject ICommentService CommentService
 @inject IPostService PostService
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            @if (isLoading)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-secondary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (post is null)
+            {
+                <div class="alert alert-warning">Post not found.</div>
+            }
+            else
+            {
+                <div class="card shadow-sm mb-5" style="background-color: cadetblue;">
+                    <div class="card-body">
+                        <article>
+                            <header class="mb-3">
+                                <h1 class="display-6 fw-semibold">@post.Title</h1>
+                                <img src="@((!string.IsNullOrEmpty(post.CoverImageUrl) && post.CoverImageUrl.CompareTo("https://example.com/image.jpg") != 0) ? post.CoverImageUrl : "/images/no_image.png")" class="card-img img-fluid" alt="@post.Title" style="height: 200px; object-fit: cover;" />
+                                <div class="text-muted">
+                                    By <strong>@(authorCache.TryGetValue(post.AuthorId, out var author) ? author.DisplayName ?? post.AuthorId : post.AuthorId)</strong>
+                                    <span class="mx-2">•</span>
+                                    <span>@post.PublishedAt.ToString()</span>
+                                </div>
+                            </header>
+                            <div class="fs-5 lh-lg">
+                                <div>@((MarkupString)post.Content)</div>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="card-footer">
+                        <a href=@($"/Authors/{post.AuthorId}")>
+                            @(authorCache.TryGetValue(post.AuthorId, out var author1) ? author1.DisplayName ?? post.AuthorId : post.AuthorId)
+                        </a>'s other posts
+                    </div>
+                </div>
+
+                <section class="mt-5">
+                    <h2 class="h4 mb-3">Comments</h2>
+
+                    @if (isAuthenticated)
+                    {
+                        @if (post.Comments?.Count > 0)
+                        {
+                            <div class="list-group mb-4">
+                                @foreach (var c in post.Comments.OrderByDescending(c => c.CreatedAt))
+                                {
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>@c.AuthorName</strong>
+                                            <span class="text-muted small">@c.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                                        </div>
+                                        <div>@c.Content</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-light border">No comments yet. Be the first to comment!</div>
+                        }
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h3 class="h5 mb-3">Add a comment</h3>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <input class="form-control" placeholder="Your name" @bind="newComment.AuthorName" />
+                                    </div>
+                                    <div class="col-12">
+                                        <textarea class="form-control" rows="4" placeholder="Your comment" @bind="newComment.Content"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-primary" @onclick="SubmitCommentAsync" disabled="@isSubmitting">
+                                            @if (isSubmitting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            }
+                                            Submit Comment
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mt-4">
+                            You must be <a href="/Account/Login">logged in</a> to comment.
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
     [Parameter] public int Id { get; set; }
@@ -13,11 +113,27 @@
 
     private Comment newComment = new() { AuthorName = "", Content = "" };
     private bool isSubmitting;
+    private bool isAuthenticated;
+
+    // Author cache for quick lookup
+    private Dictionary<string, ApplicationUser> authorCache = new();
 
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
         post = await PostService.GetByIdAsync(Id);
+
+        // Cache the author for this post
+        if (post != null && !string.IsNullOrEmpty(post.AuthorId) && !authorCache.ContainsKey(post.AuthorId))
+        {
+            var author = await UserService.GetByIdAsync(Guid.Parse(post.AuthorId));
+            if (author != null)
+                authorCache[post.AuthorId] = author;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
         isLoading = false;
     }
 
@@ -42,85 +158,3 @@
         StateHasChanged();
     }
 }
-
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-9 col-xl-8">
-            @if (isLoading)
-            {
-                <div class="text-center py-5">
-                    <div class="spinner-border text-secondary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            }
-            else if (post is null)
-            {
-                <div class="alert alert-warning">Post not found.</div>
-            }
-            else
-            {
-                <article class="mb-5">
-                    <header class="mb-3">
-                        <h1 class="display-6 fw-semibold">@post.Title</h1>
-                        <div class="text-muted">
-                            By <strong>@post.Author.DisplayName</strong>
-                            <span class="mx-2">•</span>
-                            <span>@post.PublishedAt.ToString()</span>
-                        </div>
-                    </header>
-                    <div class="fs-5 lh-lg">
-                        @post.Content
-                    </div>
-                </article>
-
-                <section class="mt-5">
-                    <h2 class="h4 mb-3">Comments</h2>
-
-                    @if (post.Comments?.Count > 0)
-                    {
-                        <div class="list-group mb-4">
-                            @foreach (var c in post.Comments.OrderByDescending(c => c.CreatedAt))
-                            {
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between">
-                                        <strong>@c.AuthorName</strong>
-                                        <span class="text-muted small">@c.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
-                                    </div>
-                                    <div>@c.Content</div>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-light border">No comments yet. Be the first to comment!</div>
-                    }
-
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h3 class="h5 mb-3">Add a comment</h3>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <input class="form-control" placeholder="Your name" @bind="newComment.AuthorName" />
-                                </div>
-                                <div class="col-12">
-                                    <textarea class="form-control" rows="4" placeholder="Your comment" @bind="newComment.Content"></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <button class="btn btn-primary" @onclick="SubmitCommentAsync" disabled="@isSubmitting">
-                                        @if (isSubmitting)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        }
-                                        Submit Comment
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            }
-        </div>
-    </div>
-</div>

@@ -1,5 +1,88 @@
-﻿<h3>Posts</h3>
+﻿@page "/Admin/Manage/Posts"
+@inject IPostService PostService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+<h3>Manage Posts</h3>
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading posts...</p>
+    </div>
+}
+else if (posts == null || !posts.Any())
+{
+    <div class="alert alert-light border text-center" role="alert">
+        No posts found.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Published</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var post in posts)
+            {
+                <tr>
+                    <td>@post.Title</td>
+                    <td>@post.AuthorId</td>
+                    <td>@(post.IsPublished ? post.PublishedAt?.ToString("dd.MM.yyyy") : "Draft")</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-2" @onclick="() => EditPost(post.Id)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeletePostAsync(post.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
+    private List<Post>? posts;
+    private bool isLoading = true;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        posts = (await PostService.GetAllAsync()).ToList();
+        isLoading = false;
+    }
+
+    private void EditPost(int postId)
+    {
+        Navigation.NavigateTo($"/Admin/Manage/Posts/Edit/{postId}");
+    }
+
+    private async Task DeletePostAsync(int postId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this post?");
+        if (confirmed)
+        {
+            await PostService.DeleteAsync(postId);
+            posts = (await PostService.GetAllAsync()).ToList();
+            StateHasChanged();
+        }
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 }

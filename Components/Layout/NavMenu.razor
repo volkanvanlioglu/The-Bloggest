@@ -4,7 +4,7 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">TheBloggest</a>
+        <a class="navbar-brand" href="/Posts">The Bloggest</a>
     </div>
 </div>
 
@@ -13,71 +13,102 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="">
-                <span class="bi bi-newspaper-nav-menu" aria-hidden="true"></span> Blog Posts
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="About">
-                <span class="bi bi-info-circle-nav-menu" aria-hidden="true"></span> About
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Contact">
-                <span class="bi bi-envelope-nav-menu" aria-hidden="true"></span> Contact
-            </NavLink>
+            <NavLink class="nav-link" data-bs-toggle="collapse" data-bs-target="#publicManagement" aria-expanded="false" aria-controls="publicManagement">Public</NavLink>
+            <div class="collapse" id="publicManagement">
+                <ul class="list-unstyled ps-3">
+                    <li>
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                        </NavLink>
+                    </li>
+                    <li>
+                        <NavLink class="nav-link" href="/Posts">
+                            <span class="bi bi-newspaper-nav-menu" aria-hidden="true"></span> Posts
+                        </NavLink>
+                    </li>
+                    <li>
+                        <NavLink class="nav-link" href="About">
+                            <span class="bi bi-info-circle-nav-menu" aria-hidden="true"></span> About
+                        </NavLink>
+                    </li>
+                    <li>
+                        <NavLink class="nav-link" href="Contact">
+                            <span class="bi bi-envelope-nav-menu" aria-hidden="true"></span> Contact
+                        </NavLink>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <AuthorizeView>
             <Authorized>
-                <div class="nav-item px-3">
+                @* <div class="nav-item px-3">
                     <div class="nav-link text-muted">
                         <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
                     </div>
-                </div>
-                
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="User/Posts">
-                        <span class="bi bi-file-text-nav-menu" aria-hidden="true"></span> My Posts
-                    </NavLink>
-                </div>
-                
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="User/Comments">
-                        <span class="bi bi-chat-dots-nav-menu" aria-hidden="true"></span> My Comments
-                    </NavLink>
-                </div>
-                
+                </div> *@
+
                 <AuthorizeView Context="inner" Roles="Admin">
                     <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="Admin/Dashboard">
-                            <span class="bi bi-gear-nav-menu" aria-hidden="true"></span> Admin Panel
-                        </NavLink>
+                        <NavLink class="nav-link" data-bs-toggle="collapse" data-bs-target="#adminManagement" aria-expanded="false" aria-controls="adminManagement">Admin Settings</NavLink>
+                        <div class="collapse" id="adminManagement">
+                            <ul class="list-unstyled ps-3">
+                                <li>
+
+                                    <NavLink class="nav-link" href="Admin/Dashboard">
+                                        <span class="bi bi-gear-nav-menu" aria-hidden="true"></span> Admin Panel
+                                    </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink class="nav-link" href="Admin/Manage/Categories">
+                                        <span class="bi bi-person-gear-nav-menu" aria-hidden="true"></span> Manage Categories
+                                    </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink class="nav-link" href="Admin/Manage/Posts">
+                                        <span class="bi bi-file-text-nav-menu" aria-hidden="true"></span> Manage Posts
+                                    </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink class="nav-link" href="Admin/Manage/Users">
+                                        <span class="bi bi-chat-dots-nav-menu" aria-hidden="true"></span> Manage Users
+                                    </NavLink>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </AuthorizeView>
-                
+
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-gear-nav-menu" aria-hidden="true"></span> Account Settings
-                    </NavLink>
-                </div>
-                
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
+                    <NavLink class="nav-link" data-bs-toggle="collapse" data-bs-target="#userManagement" aria-expanded="false" aria-controls="userManagement">User Management</NavLink>
+                    <div class="collapse" id="userManagement">
+                        <ul class="list-unstyled ps-3">
+                            <li>
+                                <NavLink class="nav-link" href="User/Posts">
+                                    <span class="bi bi-file-text-nav-menu" aria-hidden="true"></span> My Posts
+                                </NavLink>
+                            </li>
+                            <li>
+                                <NavLink class="nav-link" href="User/Comments">
+                                    <span class="bi bi-chat-dots-nav-menu" aria-hidden="true"></span> My Comments
+                                </NavLink>
+                            </li>
+                            <li>
+                                <NavLink class="nav-link" href="Account/Manage">
+                                    <span class="bi bi-person-gear-nav-menu" aria-hidden="true"></span> Account Settings
+                                </NavLink>
+                            </li>
+                            <div class="nav-item px-3">
+                                <form action="Account/Logout" method="post">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                                    <button type="submit" class="nav-link">
+                                        <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </ul>
+                    </div>
                 </div>
             </Authorized>
             <NotAuthorized>

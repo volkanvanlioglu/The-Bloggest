@@ -1,0 +1,146 @@
+﻿@page "/Authors/{Id:guid}"
+@inject IPostService PostService
+@inject ICommentService CommentService
+@inject IUserService UserService
+@rendermode InteractiveServer
+
+<div class="container py-5">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading author details...</p>
+        </div>
+    }
+    else if (author == null)
+    {
+        <div class="alert alert-warning">Author not found.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-4" style="background-color: #f8f9fa;">
+            <div class="card-body">
+                <h2 class="h4 mb-2">@author.DisplayName</h2>
+                <div class="mb-2">
+                    <strong>Posts:</strong> @authorPosts.Count
+                    <span class="mx-2">•</span>
+                    <strong>Comments:</strong> @authorComments.Count
+                </div>
+                <div class="mb-2">
+                    <strong>Share of Total Posts:</strong>
+                    @if (totalPosts > 0)
+                    {
+                        @($"{(authorPosts.Count * 100.0 / totalPosts):F2}%")
+                    }
+                    else
+                    {
+                        <span>0%</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h3 class="h5 mb-3">Posts by @author.DisplayName</h3>
+            @if (authorPosts.Count > 0)
+            {
+                <div class="row g-4">
+                    <Virtualize TItem="Post" Items="authorPosts" Context="post" OverscanCount="3" SpacerElement="div">
+                        <div class="col-sm-12 col-md-6 col-lg-4">
+                            <Card Class="h-100 shadow-sm">
+                                <a href="@($"/Posts/{post.Id}")"><img src="@((!string.IsNullOrEmpty(post.CoverImageUrl) && post.CoverImageUrl.CompareTo("https://example.com/image.jpg") != 0) ? post.CoverImageUrl : "/images/no_image.png")" class="card-img-top img-fluid" alt="@post.Title" style="height: 200px; object-fit: cover;" /></a>
+                                <CardBody Class="d-flex flex-column">
+                                    <CardTitle Class="h5 mb-2">
+                                        <a class="text-decoration-none text-dark" href="@($"/Posts/{post.Id}")">@post.Title</a>
+                                    </CardTitle>
+                                    <div class="text-muted small mb-2">
+                                        <span class="me-2">•</span>
+                                        <span>@post.PublishedAt!.Value.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                    <CardText Class="text-secondary flex-grow-1">
+                                        @((MarkupString)Shorten(post.Content, 150))
+                                    </CardText>
+                                    <div class="mt-auto">
+                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" To="@($"/Posts/{post.Id}")" Type="ButtonType.Link">
+                                            Read More
+                                        </Button>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        </div>
+                    </Virtualize>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light border">No posts by this author yet.</div>
+            }
+        </div>
+
+        <div class="mb-4">
+            <h3 class="h5 mb-3">Comments by @author.DisplayName</h3>
+            @if (authorComments.Count > 0)
+            {
+                <div class="list-group">
+                    @foreach (var c in authorComments.OrderByDescending(c => c.CreatedAt).Take(10))
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold">@c.Content</span>
+                                <span class="text-muted small">@c.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                            </div>
+                            <div class="small text-muted">On post: <a href="/Posts/@c.PostId">@c.PostId</a></div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light border">No comments by this author yet.</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ApplicationUser? author;
+    private List<Post> authorPosts = new();
+    private List<Comment> authorComments = new();
+    private int totalPosts = 0;
+    private bool isLoading = true;
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+
+        author = await UserService.GetByIdAsync(Id);
+        if (author != null)
+        {
+            var allPosts = await PostService.GetAllAsync();
+            authorPosts = allPosts.Where(p => p.AuthorId == author.Id.ToString()).ToList();
+            totalPosts = allPosts.Count();
+
+            var allComments = await CommentService.GetAllAsync();
+            authorComments = allComments.Where(c => c.AuthorName == author.DisplayName!.ToString()).ToList();
+        }
+
+        isLoading = false;
+    }
+
+    private static string Shorten(string? content, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return string.Empty;
+        var text = content.Replace("\r", string.Empty).Replace("\n", " ");
+        if (text.Length <= maxLength) return text;
+        return text.Substring(0, maxLength).TrimEnd() + "…";
+    }
+}

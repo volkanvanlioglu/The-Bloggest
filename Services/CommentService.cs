@@ -10,8 +10,8 @@ namespace TheBloggest.Services
 
         public CommentService(HttpClient http) => _http = http;
 
-        public async Task<IEnumerable<Comment>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<Comment>>($"{baseUrl}/Get") ?? [];
+        public async Task<List<Comment>> GetAllAsync() =>
+            await _http.GetFromJsonAsync<List<Comment>>($"{baseUrl}/Get") ?? [];
 
         public async Task<Comment?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<Comment>($"{baseUrl}/{id}");

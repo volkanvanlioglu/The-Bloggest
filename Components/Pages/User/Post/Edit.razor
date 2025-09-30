@@ -1,9 +1,4 @@
 ﻿@page "/User/Posts/Edit/{Id:int}"
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using TheBloggest.Data.Models
-@using TheBloggest.Services
-@using TheBloggest.Interfaces
 @attribute [Authorize(Roles = "User,Admin")]
 @inject IPostService PostService
 @inject ICategoryService CategoryService

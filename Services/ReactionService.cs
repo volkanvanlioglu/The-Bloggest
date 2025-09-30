@@ -10,8 +10,8 @@ namespace TheBloggest.Services
 
         public ReactionService(HttpClient http) => _http = http;
 
-        public async Task<IEnumerable<Reaction>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<IEnumerable<Reaction>>($"{baseUrl}/Get") ?? [];
+        public async Task<List<Reaction>> GetAllAsync() =>
+            await _http.GetFromJsonAsync<List<Reaction>>($"{baseUrl}/Get") ?? [];
 
         public async Task<Reaction?> GetByIdAsync(int id) =>
             await _http.GetFromJsonAsync<Reaction>($"{baseUrl}/{id}");

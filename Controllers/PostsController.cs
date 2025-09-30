@@ -22,6 +22,37 @@ namespace TheBloggest.Controllers
                 .Include(p => p.Comments)
                 .ToListAsync();
 
+        // ✅ Public: paginated posts for public consumption
+        [HttpGet("paginated")]
+        [AllowAnonymous]
+        public async Task<ActionResult<object>> GetPostsPaginated([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var query = _context.Posts
+                .Where(p => p.IsPublished)
+                .Include(p => p.Author)
+                .Include(p => p.Comments)
+                .OrderByDescending(p => p.PublishedAt);
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var posts = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new
+            {
+                Posts = posts,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber < totalPages
+            };
+        }
+
         // ✅ Public
         [HttpGet("{id}")]
         [AllowAnonymous]
