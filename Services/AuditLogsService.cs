@@ -5,34 +5,43 @@ namespace TheBloggest.Services
 {
     public class AuditLogsService : IAuditLogsService
     {
-        private readonly HttpClient _http;
-        private const string baseUrl = "api/auditlogs";
+        private const string baseUrl = "api/AuditLogs";
+        private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuditLogsService(HttpClient http) => _http = http;
+        public AuditLogsService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+        {
+            _httpClient = httpClient;
+            _httpContextAccessor = httpContextAccessor;
 
-        public async Task<List<AuditLogs>> GetAllAsync() =>
-            await _http.GetFromJsonAsync<List<AuditLogs>>($"{baseUrl}/Get") ?? [];
+            var cookie = _httpContextAccessor.HttpContext?.Request.Headers["Cookie"].ToString();
 
-        public async Task<AuditLogs?> GetByIdAsync(int id) =>
-            await _http.GetFromJsonAsync<AuditLogs>($"{baseUrl}/{id}");
+            if (!string.IsNullOrEmpty(cookie))
+            {
+                _httpClient.DefaultRequestHeaders.Remove("Cookie");
+                _httpClient.DefaultRequestHeaders.Add("Cookie", cookie);
+            }
+        }
+
+        public async Task<List<AuditLogs>> GetAllAsync() => await _httpClient.GetFromJsonAsync<List<AuditLogs>>($"{baseUrl}/Get") ?? [];
+
+        public async Task<AuditLogs?> GetByIdAsync(int id) => await _httpClient.GetFromJsonAsync<AuditLogs>($"{baseUrl}/Get/{id}");
 
         public async Task<AuditLogs?> CreateAsync(AuditLogs entity)
         {
-            var response = await _http.PostAsJsonAsync(baseUrl, entity);
-            return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<AuditLogs>()
-                : null;
+            var response = await _httpClient.PostAsJsonAsync($"{baseUrl}/Create", entity);
+            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<AuditLogs>() : null;
         }
 
         public async Task<bool> UpdateAsync(int id, AuditLogs entity)
         {
-            var response = await _http.PutAsJsonAsync($"{baseUrl}/{id}", entity);
+            var response = await _httpClient.PutAsJsonAsync($"{baseUrl}/Update/{id}", entity);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var response = await _http.DeleteAsync($"{baseUrl}/{id}");
+            var response = await _httpClient.DeleteAsync($"{baseUrl}/Delete/{id}");
             return response.IsSuccessStatusCode;
         }
     }

@@ -2,6 +2,7 @@
 @attribute [Authorize(Roles = "User,Admin")]
 @inject IPostService PostService
 @inject ICategoryService CategoryService
+@inject IPostTagService PostTagService
 @inject ITagService TagService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
@@ -81,12 +82,12 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="tags" class="form-label">Tags</label>
-                                                <InputSelect id="tags" class="form-select" @bind-value="selectedTagIds" multiple>
+                                                <select id="tags" class="form-select" multiple @onchange="OnTagsChanged">
                                                     @foreach (var tag in tags)
                                                     {
-                                                        <option value="@tag.Id">@tag.Name</option>
+                                                        <option value="@tag.Id" selected="@selectedTagIds.Contains(tag.Id)">@tag.Name</option>
                                                     }
-                                                </InputSelect>
+                                                </select>
                                                 <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple tags</small>
                                             </div>
                                         </div>
@@ -232,6 +233,10 @@
             newPost.AuthorId = currentUserId;
             newPost.IsPublished = publishNow;
             newPost.CreatedAt = DateTime.UtcNow;
+            newPost.PostCategories = selectedCategoryId.HasValue
+                ? new List<PostCategory> { new PostCategory { CategoryId = selectedCategoryId.Value } }
+                : new List<PostCategory>();
+            newPost.PostTags = selectedTagIds.Select(tagId => new PostTag { TagId = tagId }).ToList();
 
             if (publishNow)
             {
@@ -249,15 +254,21 @@
                 // TODO: Handle category and tag associations
                 // This would require additional API endpoints or service methods
 
-                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Added Successfully!", newPost.CreatedAt.ToString(), $"Map (production) added successfully on {newPost.CreatedAt}", true));
+                for (int i = 0, l = createdPost.PostTags.Count; i < l; i++)
+                {
+                    var tag = createdPost.PostTags.ToList()[i];
+                    var createdPostTag = await PostTagService.CreateAsync(tag);
+                }
+
+                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Added Successfully!", newPost.CreatedAt.ToString(), $"Post added successfully on {newPost.CreatedAt}", true));
 
                 await Task.Delay(3000);
-                Navigation.NavigateTo("/User/Posts");
+                Navigation.NavigateTo("/User/Posts/List");
             }
             else
             {
                 // Handle error - could show a toast notification
-                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", newPost.CreatedAt.ToString(), $"An error occurred during map (production) addition on {newPost.CreatedAt}", true));
+                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", newPost.CreatedAt.ToString(), $"An error occurred during post addition on {newPost.CreatedAt}", true));
                 await Task.Delay(3000);
                 Console.WriteLine("Failed to create post");
             }
@@ -265,7 +276,7 @@
         catch (Exception ex)
         {
             // Handle error - could show a toast notification
-            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during map (production) addition on {DateTime.UtcNow}", true));
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during post addition on {DateTime.UtcNow}", true));
             await Task.Delay(3000);
             Console.WriteLine($"Error creating post: {ex.Message}");
         }
@@ -318,4 +329,26 @@
         HelpText = helpText,
         Message = message,
     };
+
+    private void OnTagsChanged(ChangeEventArgs e)
+    {
+        selectedTagIds.Clear();
+        if (e.Value is not null)
+        {
+            // e.Value is a string when only one item is selected, or a string[] when multiple
+            if (e.Value is string single)
+            {
+                if (int.TryParse(single, out var id))
+                    selectedTagIds.Add(id);
+            }
+            else if (e.Value is IEnumerable<string> values)
+            {
+                foreach (var value in values)
+                {
+                    if (int.TryParse(value, out var id))
+                        selectedTagIds.Add(id);
+                }
+            }
+        }
+    }
 }

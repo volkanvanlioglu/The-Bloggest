@@ -25,6 +25,8 @@ namespace TheBloggest.Extensions
             services.AddApiClient<IMediaLibraryService, MediaLibraryService>();
             services.AddApiClient<ISettingsService, SettingsService>();
             services.AddApiClient<IAuditLogsService, AuditLogsService>();
+            services.AddApiClient<IPostCategoryService, PostCategoryService>();
+            services.AddApiClient<IPostTagService, PostTagService>();
 
             return services;
         }

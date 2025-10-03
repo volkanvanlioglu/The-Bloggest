@@ -28,7 +28,7 @@ namespace TheBloggest.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Tag>> Post(Tag entity)
+        public async Task<ActionResult<Tag>> Create(Tag entity)
         {
             _context.Tags.Add(entity);
             await _context.SaveChangesAsync();
@@ -37,7 +37,7 @@ namespace TheBloggest.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Put(int id, Tag entity)
+        public async Task<IActionResult> Update(int id, Tag entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

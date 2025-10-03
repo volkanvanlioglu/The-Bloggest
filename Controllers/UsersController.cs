@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TheBloggest.Data;
@@ -17,21 +16,18 @@ namespace TheBloggest.Controllers
         // ✅ Public: anyone can read ApplicationUsers
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<ApplicationUser>>> GetApplicationUsers() =>
-            await _context.Users.ToListAsync();
+        public async Task<ActionResult<IEnumerable<ApplicationUser>>> Get() => await _context.Users.ToListAsync();
 
         // ✅ Public
         [HttpGet("{id}")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApplicationUser>> GetApplicationUser(Guid id)
+        public async Task<ActionResult<ApplicationUser>> Get(Guid id)
         {
-            var ApplicationUser = await _context.Users
-                .Include(p => p.Comments)
-                .FirstOrDefaultAsync(p => p.Id == id.ToString());
+            var ApplicationUser = await _context.Users.Include(p => p.Comments).FirstOrDefaultAsync(p => p.Id == id.ToString());
             return ApplicationUser == null ? NotFound() : ApplicationUser;
         }
 
-        //// 🔒 Users and Admins can create ApplicationUsers
+        // 🔒 Users and Admins can create ApplicationUsers
         //[HttpPost]
         //[Authorize(Roles = "User,Admin")]
         //public async Task<ActionResult<ApplicationUser>> Create(ApplicationUser ApplicationUser)
@@ -43,7 +39,7 @@ namespace TheBloggest.Controllers
 
         //    _context.Users.Add(ApplicationUser);
         //    await _context.SaveChangesAsync();
-        //    return CreatedAtAction(nameof(GetApplicationUser), new { id = ApplicationUser.Id }, ApplicationUser);
+        //    return CreatedAtAction(nameof(GetByIdAsync), new { id = ApplicationUser.Id }, ApplicationUser);
         //}
 
         //// 🔒 Users can edit their own ApplicationUsers, Admins can edit any ApplicationUser

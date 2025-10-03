@@ -15,8 +15,7 @@ namespace TheBloggest.Controllers
         public SettingsController(ApplicationDbContext context) => _context = context;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Settings>>> Get() =>
-            await _context.Settings.ToListAsync();
+        public async Task<ActionResult<IEnumerable<Settings>>> Get() => await _context.Settings.ToListAsync();
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Settings>> Get(int id)
@@ -26,7 +25,7 @@ namespace TheBloggest.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Settings>> Post(Settings entity)
+        public async Task<ActionResult<Settings>> Create(Settings entity)
         {
             _context.Settings.Add(entity);
             await _context.SaveChangesAsync();
@@ -34,7 +33,7 @@ namespace TheBloggest.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, Settings entity)
+        public async Task<IActionResult> Update(int id, Settings entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

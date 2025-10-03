@@ -1,18 +1,11 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
-using TheBloggest.Data;
-using TheBloggest.Data.Models;
+﻿using TheBloggest.Data.Models;
 using TheBloggest.Interfaces;
 
 namespace TheBloggest.Services
 {
     public class PostService : IPostService
     {
-        private readonly HttpClient _http;
         private const string baseUrl = "api/Posts";
-
-        //public PostService(HttpClient http) => _http = http;
-
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -20,60 +13,38 @@ namespace TheBloggest.Services
         {
             _httpClient = httpClient;
             _httpContextAccessor = httpContextAccessor;
-        }
 
-        public async Task<List<Post>> GetAllAsync()
-        {
-            var cookie = _httpContextAccessor.HttpContext?.Request
-                .Headers["Cookie"].ToString();
+            var cookie = _httpContextAccessor.HttpContext?.Request.Headers["Cookie"].ToString();
 
             if (!string.IsNullOrEmpty(cookie))
             {
                 _httpClient.DefaultRequestHeaders.Remove("Cookie");
                 _httpClient.DefaultRequestHeaders.Add("Cookie", cookie);
             }
-
-            return await _httpClient.GetFromJsonAsync<List<Post>>($"{baseUrl}/GetPosts");
         }
 
-        //public async Task<IEnumerable<Post>> GetAllAsync() =>
-        //    await _http.GetFromJsonAsync<IEnumerable<Post>>($"{baseUrl}/GetPosts") ?? [];
+        public async Task<List<Post>> GetAllAsync() => await _httpClient.GetFromJsonAsync<List<Post>>($"{baseUrl}/Get");
 
-        public async Task<Post?> GetByIdAsync(int id) =>
-            await _httpClient.GetFromJsonAsync<Post>($"{baseUrl}/GetPost/{id}");
+        public async Task<Post?> GetByIdAsync(int id) => await _httpClient.GetFromJsonAsync<Post>($"{baseUrl}/Get/{id}");
 
         public async Task<Post?> CreateAsync(Post entity)
         {
-            var cookie = _httpContextAccessor.HttpContext?.Request
-                .Headers["Cookie"].ToString();
-
-            if (!string.IsNullOrEmpty(cookie))
-            {
-                _httpClient.DefaultRequestHeaders.Remove("Cookie");
-                _httpClient.DefaultRequestHeaders.Add("Cookie", cookie);
-            }
-
             var response = await _httpClient.PostAsJsonAsync($"{baseUrl}/Create", entity);
-
-            //var response = await _httpClient.PostAsJsonAsync($"{baseUrl}/Create", entity);
-            return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<Post>()
-                : null;
+            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<Post>() : null;
         }
 
         public async Task<bool> UpdateAsync(int id, Post entity)
         {
-            var response = await _http.PutAsJsonAsync($"{baseUrl}/{id}", entity);
+            var response = await _httpClient.PutAsJsonAsync($"{baseUrl}/Update/{id}", entity);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var response = await _http.DeleteAsync($"{baseUrl}/{id}");
+            var response = await _httpClient.DeleteAsync($"{baseUrl}/Delete/{id}");
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId) =>
-            await _httpClient.GetFromJsonAsync<IEnumerable<Post>>($"{baseUrl}?authorId={authorId}") ?? [];
+        public async Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId) => await _httpClient.GetFromJsonAsync<IEnumerable<Post>>($"{baseUrl}/GetPostsByAuthor?authorId={authorId}") ?? [];
     }
 }

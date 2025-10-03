@@ -15,21 +15,17 @@ namespace TheBloggest.Controllers
         public AuditLogsController(ApplicationDbContext context) => _context = context;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AuditLogs>>> Get() =>
-            await _context.AuditLogs.Include(a => a.User).ToListAsync();
+        public async Task<ActionResult<IEnumerable<AuditLogs>>> Get() => await _context.AuditLogs.Include(a => a.User).ToListAsync();
 
         [HttpGet("{id}")]
         public async Task<ActionResult<AuditLogs>> Get(int id)
         {
-            var entity = await _context.AuditLogs
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.Id == id);
-
+            var entity = await _context.AuditLogs.Include(a => a.User).FirstOrDefaultAsync(a => a.Id == id);
             return entity == null ? NotFound() : entity;
         }
 
         [HttpPost]
-        public async Task<ActionResult<AuditLogs>> Post(AuditLogs entity)
+        public async Task<ActionResult<AuditLogs>> Create(AuditLogs entity)
         {
             _context.AuditLogs.Add(entity);
             await _context.SaveChangesAsync();
@@ -37,7 +33,7 @@ namespace TheBloggest.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, AuditLogs entity)
+        public async Task<IActionResult> Update(int id, AuditLogs entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

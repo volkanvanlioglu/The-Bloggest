@@ -15,8 +15,7 @@ namespace TheBloggest.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<Category>>> Get() =>
-            await _context.Categories.ToListAsync();
+        public async Task<ActionResult<IEnumerable<Category>>> Get() => await _context.Categories.ToListAsync();
 
         [HttpGet("{id}")]
         [AllowAnonymous]
@@ -28,7 +27,7 @@ namespace TheBloggest.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Category>> Post(Category entity)
+        public async Task<ActionResult<Category>> Create(Category entity)
         {
             _context.Categories.Add(entity);
             await _context.SaveChangesAsync();
@@ -37,7 +36,7 @@ namespace TheBloggest.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Put(int id, Category entity)
+        public async Task<IActionResult> Update(int id, Category entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

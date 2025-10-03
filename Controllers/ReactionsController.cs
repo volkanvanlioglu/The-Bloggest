@@ -15,27 +15,19 @@ namespace TheBloggest.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<Reaction>>> Get() =>
-            await _context.Reactions
-                .Include(r => r.User)
-                .Include(r => r.Post)
-                .ToListAsync();
+        public async Task<ActionResult<IEnumerable<Reaction>>> Get() => await _context.Reactions.Include(r => r.User).Include(r => r.Post).ToListAsync();
 
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<ActionResult<Reaction>> Get(int id)
         {
-            var entity = await _context.Reactions
-                .Include(r => r.User)
-                .Include(r => r.Post)
-                .FirstOrDefaultAsync(r => r.Id == id);
-
+            var entity = await _context.Reactions.Include(r => r.User).Include(r => r.Post).FirstOrDefaultAsync(r => r.Id == id);
             return entity == null ? NotFound() : entity;
         }
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Reaction>> Post(Reaction entity)
+        public async Task<ActionResult<Reaction>> Create(Reaction entity)
         {
             _context.Reactions.Add(entity);
             await _context.SaveChangesAsync();
@@ -44,7 +36,7 @@ namespace TheBloggest.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Put(int id, Reaction entity)
+        public async Task<IActionResult> Update(int id, Reaction entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

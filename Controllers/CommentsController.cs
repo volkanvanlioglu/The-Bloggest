@@ -15,8 +15,7 @@ namespace TheBloggest.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<Comment>>> Get() =>
-            await _context.Comments.Include(c => c.User).Include(c => c.Post).ToListAsync();
+        public async Task<ActionResult<IEnumerable<Comment>>> Get() => await _context.Comments.Include(c => c.User).Include(c => c.Post).ToListAsync();
 
         [HttpGet("{id}")]
         [AllowAnonymous]
@@ -28,7 +27,7 @@ namespace TheBloggest.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Comment>> Post(Comment entity)
+        public async Task<ActionResult<Comment>> Create(Comment entity)
         {
             _context.Comments.Add(entity);
             await _context.SaveChangesAsync();
@@ -37,7 +36,7 @@ namespace TheBloggest.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Put(int id, Comment entity)
+        public async Task<IActionResult> Update(int id, Comment entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

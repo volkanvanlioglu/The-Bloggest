@@ -16,52 +16,14 @@ namespace TheBloggest.Controllers
         // ✅ Public: anyone can read posts
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPosts() =>
-            await _context.Posts
-                .Include(p => p.Author)
-                .Include(p => p.Comments)
-                .ToListAsync();
-
-        // ✅ Public: paginated posts for public consumption
-        [HttpGet("paginated")]
-        [AllowAnonymous]
-        public async Task<ActionResult<object>> GetPostsPaginated([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
-        {
-            var query = _context.Posts
-                .Where(p => p.IsPublished)
-                .Include(p => p.Author)
-                .Include(p => p.Comments)
-                .OrderByDescending(p => p.PublishedAt);
-
-            var totalCount = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            var posts = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return new
-            {
-                Posts = posts,
-                TotalCount = totalCount,
-                TotalPages = totalPages,
-                CurrentPage = pageNumber,
-                PageSize = pageSize,
-                HasPreviousPage = pageNumber > 1,
-                HasNextPage = pageNumber < totalPages
-            };
-        }
+        public async Task<ActionResult<IEnumerable<Post>>> Get() => await _context.Posts.Include(p => p.Author).Include(p => p.Comments).ToListAsync();
 
         // ✅ Public
         [HttpGet("{id}")]
         [AllowAnonymous]
-        public async Task<ActionResult<Post>> GetPost(int id)
+        public async Task<ActionResult<Post>> Get(int id)
         {
-            var post = await _context.Posts
-                .Include(p => p.Author)
-                .Include(p => p.Comments)
-                .FirstOrDefaultAsync(p => p.Id == id);
+            var post = await _context.Posts.Include(p => p.Author).Include(p => p.Comments).FirstOrDefaultAsync(p => p.Id == id);
             return post == null ? NotFound() : post;
         }
 
@@ -77,7 +39,7 @@ namespace TheBloggest.Controllers
 
             _context.Posts.Add(post);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetPost), new { id = post.Id }, post);
+            return CreatedAtAction(nameof(Get), new { id = post.Id }, post);
         }
 
         // 🔒 Users can edit their own posts, Admins can edit any post
@@ -107,14 +69,8 @@ namespace TheBloggest.Controllers
             existingPost.UpdatedAt = DateTime.UtcNow;
             
             // Handle published date
-            if (post.IsPublished && !existingPost.PublishedAt.HasValue)
-            {
-                existingPost.PublishedAt = DateTime.UtcNow;
-            }
-            else if (!post.IsPublished && existingPost.PublishedAt.HasValue)
-            {
-                existingPost.PublishedAt = null;
-            }
+            if (post.IsPublished && !existingPost.PublishedAt.HasValue) existingPost.PublishedAt = DateTime.UtcNow;
+            else if (!post.IsPublished && existingPost.PublishedAt.HasValue) existingPost.PublishedAt = null;
             
             await _context.SaveChangesAsync();
             return NoContent();
@@ -143,7 +99,7 @@ namespace TheBloggest.Controllers
         // 🔒 Get posts by author (for user's own posts)
         [HttpGet]
         [Authorize(Roles = "User,Admin")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPostsByAuthor([FromQuery] string authorId)
+        public async Task<ActionResult<IEnumerable<Post>>> GetPostsByAuthorAsync([FromQuery] string authorId)
         {
             var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var isAdmin = User.IsInRole("Admin");
@@ -152,14 +108,33 @@ namespace TheBloggest.Controllers
             if (!isAdmin && authorId != currentUserId)
                 return Forbid();
             
-            var posts = await _context.Posts
-                .Where(p => p.AuthorId == authorId)
-                .Include(p => p.Author)
-                .Include(p => p.Comments)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            var posts = await _context.Posts.Where(p => p.AuthorId == authorId).Include(p => p.Author).Include(p => p.Comments).OrderByDescending(p => p.CreatedAt).ToListAsync();
                 
             return posts;
+        }
+
+        // ✅ Public: paginated posts for public consumption
+        [HttpGet("paginated")]
+        [AllowAnonymous]
+        public async Task<ActionResult<object>> GetPostsPaginatedAsync([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var query = _context.Posts.Where(p => p.IsPublished).Include(p => p.Author).Include(p => p.Comments).OrderByDescending(p => p.PublishedAt);
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var posts = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new
+            {
+                Posts = posts,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber < totalPages
+            };
         }
     }
 }

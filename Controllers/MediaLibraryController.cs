@@ -15,23 +15,19 @@ namespace TheBloggest.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<MediaLibrary>>> Get() =>
-            await _context.MediaLibraries.Include(m => m.UploadedBy).ToListAsync();
+        public async Task<ActionResult<IEnumerable<MediaLibrary>>> Get() => await _context.MediaLibraries.Include(m => m.UploadedBy).ToListAsync();
 
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<ActionResult<MediaLibrary>> Get(int id)
         {
-            var entity = await _context.MediaLibraries
-                .Include(m => m.UploadedBy)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
+            var entity = await _context.MediaLibraries.Include(m => m.UploadedBy).FirstOrDefaultAsync(m => m.Id == id);
             return entity == null ? NotFound() : entity;
         }
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<MediaLibrary>> Post(MediaLibrary entity)
+        public async Task<ActionResult<MediaLibrary>> Create(MediaLibrary entity)
         {
             _context.MediaLibraries.Add(entity);
             await _context.SaveChangesAsync();
@@ -40,7 +36,7 @@ namespace TheBloggest.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Put(int id, MediaLibrary entity)
+        public async Task<IActionResult> Update(int id, MediaLibrary entity)
         {
             if (id != entity.Id) return BadRequest();
             _context.Entry(entity).State = EntityState.Modified;

@@ -3,13 +3,13 @@ using TheBloggest.Interfaces;
 
 namespace TheBloggest.Services
 {
-    public class UserService : IUserService
+    public class PostTagService : IPostTagService
     {
-        private const string baseUrl = "api/Users";
+        private const string baseUrl = "api/PostTags";
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+        public PostTagService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClient;
             _httpContextAccessor = httpContextAccessor;
@@ -23,24 +23,23 @@ namespace TheBloggest.Services
             }
         }
 
-        public async Task<List<ApplicationUser>> GetAllAsync() => await _httpClient.GetFromJsonAsync<List<ApplicationUser>>($"{baseUrl}/Get");
+        public async Task<List<PostTag>> GetAllAsync() => await _httpClient.GetFromJsonAsync<List<PostTag>>($"{baseUrl}/Get") ?? new();
 
-        public async Task<ApplicationUser?> GetByIdAsync(Guid id) => await _httpClient.GetFromJsonAsync<ApplicationUser>($"{baseUrl}/Get/{id}");
+        public async Task<PostTag?> GetByIdAsync(int id) => await _httpClient.GetFromJsonAsync<PostTag>($"{baseUrl}/Get/{id}");
 
-        public async Task<ApplicationUser?> CreateAsync(ApplicationUser entity)
+        public async Task<PostTag?> CreateAsync(PostTag entity)
         {
             var response = await _httpClient.PostAsJsonAsync($"{baseUrl}/Create", entity);
-
-            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<ApplicationUser>() : null;
+            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<PostTag>() : null;
         }
 
-        public async Task<bool> UpdateAsync(Guid id, ApplicationUser entity)
+        public async Task<bool> UpdateAsync(int id, PostTag entity)
         {
             var response = await _httpClient.PutAsJsonAsync($"{baseUrl}/Update/{id}", entity);
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(int id)
         {
             var response = await _httpClient.DeleteAsync($"{baseUrl}/Delete/{id}");
             return response.IsSuccessStatusCode;

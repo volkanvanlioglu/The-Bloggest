@@ -16,8 +16,8 @@ namespace TheBloggest.Data.Models
         [Required]
         public string Content { get; set; }
 
-        public string Excerpt { get; set; }
-        public string CoverImageUrl { get; set; }
+        public string? Excerpt { get; set; }
+        public string? CoverImageUrl { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
