@@ -1,0 +1,81 @@
+﻿@page "/Admin/Manage/Comments/Edit/{Id:int}"
+@attribute [Authorize(Roles = "Admin")]
+@inject ICommentService CommentService
+@inject NavigationManager Navigation
+
+<h3>Edit Comment</h3>
+
+<div class="card">
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading comment...</p>
+            </div>
+        }
+        else if (comment == null)
+        {
+            <div class="alert alert-danger">Comment not found.</div>
+        }
+        else
+        {
+            <EditForm Model="comment" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Author</label>
+                    <InputText class="form-control" @bind-Value="comment.AuthorName" disabled />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Content</label>
+                    <InputTextArea class="form-control" @bind-Value="comment.Content" rows="4" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Save
+                    </button>
+                    <a class="btn btn-secondary" href="/Admin/Manage/Comments/List">Cancel</a>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Comment? comment;
+    private bool isLoading = true;
+    private bool isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        comment = await CommentService.GetByIdAsync(Id);
+        isLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSaving = true;
+        var result = await CommentService.UpdateAsync(Id, comment!);
+        isSaving = false;
+
+        if (result)
+        {
+            Navigation.NavigateTo("/Admin/Manage/Comments/List");
+        }
+        else
+        {
+            // Optionally show an error message
+        }
+    }
+}

@@ -54,5 +54,22 @@ namespace TheBloggest.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        // 🔒 Get posts by author (for user's own posts)
+        [HttpGet]
+        [Authorize(Roles = "User,Admin")]
+        public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsByUserAsync([FromQuery] string userId)
+        {
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Admin");
+
+            // Users can only see their own posts, admins can see any user's posts
+            if (!isAdmin && userId != currentUserId)
+                return Forbid();
+
+            var posts = await _context.Comments.Where(p => p.UserId == userId).Include(p => p.User).OrderByDescending(p => p.CreatedAt).ToListAsync();
+
+            return posts;
+        }
     }
 }

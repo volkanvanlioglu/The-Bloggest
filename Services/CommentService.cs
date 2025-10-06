@@ -44,5 +44,7 @@ namespace TheBloggest.Services
             var response = await _httpClient.DeleteAsync($"{baseUrl}/Delete/{id}");
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<IEnumerable<Comment>> GetCommentsByUserAsync(string userId) => await _httpClient.GetFromJsonAsync<IEnumerable<Comment>>($"{baseUrl}/GetCommentsByUser?userId={userId}") ?? [];
     }
 }

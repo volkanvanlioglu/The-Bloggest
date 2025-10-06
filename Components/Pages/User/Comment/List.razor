@@ -1,0 +1,130 @@
+﻿@page "/User/Comment/List"
+@inject ICommentService CommentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JS
+
+<h3>My Comments</h3>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading your comments...</p>
+                        </div>
+                    }
+                    else if (pagedComments.Count == 0)
+                    {
+                        <div class="alert alert-light border text-center" role="alert">
+                            You have not made any comments yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Content</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var comment in pagedComments)
+                                {
+                                    <tr>
+                                        <td>@comment.Content</td>
+                                        <td>@comment.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" href="@($"/User/Comment/Edit/{comment.Id}")">Edit</a>
+                                            <button class="btn btn-sm btn-danger ms-2" @onclick="() => DeleteCommentAsync(comment.Id)">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <nav aria-label="Comment pagination">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(CurrentPage - 1)">Previous</button>
+                                </li>
+                                @for (int i = 1; i <= TotalPages; i++)
+                                {
+                                    <li class="page-item @(CurrentPage == i ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
+                                    </li>
+                                }
+                                <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(CurrentPage + 1)">Next</button>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Comment> allComments = new();
+    private List<Comment> pagedComments = new();
+    private bool isLoading = true;
+    private string? currentUserId;
+
+    private int PageSize = 20;
+    private int CurrentPage = 1;
+    private int TotalPages => (int)Math.Ceiling((allComments.Count + (double)PageSize - 1) / PageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            allComments = (await CommentService.GetCommentsByUserAsync(currentUserId)).ToList();
+        }
+        UpdatePagedComments();
+        isLoading = false;
+    }
+
+    private void ChangePage(int page)
+    {
+        if (page < 1) page = 1;
+        if (page > TotalPages) page = TotalPages;
+        CurrentPage = page;
+        UpdatePagedComments();
+    }
+
+    private void UpdatePagedComments()
+    {
+        pagedComments = allComments
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private async Task DeleteCommentAsync(int commentId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this comment?");
+        if (confirmed)
+        {
+            await CommentService.DeleteAsync(commentId);
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                allComments = (await CommentService.GetCommentsByUserAsync(currentUserId)).ToList();
+            }
+            UpdatePagedComments();
+        }
+    }
+}

@@ -1,0 +1,68 @@
+﻿@page "/Admin/Manage/AuditLogs/List"
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager Navigation
+@inject IAuditLogsService AuditLogService
+@rendermode InteractiveServer
+
+<PageTitle>@PageTitle</PageTitle>
+
+<h3>@PageTitle</h3>
+
+<div class="mb-3">
+    <!-- No "New" button for audit logs, but placeholder for consistency -->
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading audit logs...</p>
+            </div>
+        }
+        else if (allLogs.Count == 0)
+        {
+            <div class="alert alert-light border text-center" role="alert">
+                No audit logs found.
+            </div>
+        }
+        else
+        {
+            <Grid TItem="AuditLogs" Class="table table-striped" Data="allLogs" AllowFiltering="@true" AllowPaging="@true" PageSize="@PageSize" PageSizeSelectorVisible="true" PageSizeSelectorItems="@AvailablePageSizes" Responsive="@true">
+                <GridColumns>
+                    <GridColumn TItem="AuditLogs" HeaderText="Date" PropertyName="Timestamp">
+                        @context.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                    </GridColumn>
+                    <GridColumn TItem="AuditLogs" HeaderText="User" PropertyName="UserName">
+                        @context.UserId
+                    </GridColumn>
+                    <GridColumn TItem="AuditLogs" HeaderText="Action" PropertyName="Action">
+                        @context.Action
+                    </GridColumn>
+                    <GridColumn TItem="AuditLogs" HeaderText="Details" PropertyName="Changes">
+                        @context.Changes
+                    </GridColumn>
+                </GridColumns>
+            </Grid>
+        }
+    </div>
+</div>
+
+@code {
+    string PageTitle = "Audit Logs";
+    private List<AuditLogs> allLogs = new();
+    private bool isLoading = true;
+
+    private int PageSize = 20;
+    int[] AvailablePageSizes = new int[] { 10, 20, 50, 100 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        allLogs = await AuditLogService.GetAllAsync();
+        isLoading = false;
+    }
+}

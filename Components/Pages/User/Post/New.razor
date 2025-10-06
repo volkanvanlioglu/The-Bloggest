@@ -1,20 +1,20 @@
 ﻿@page "/User/Posts/New"
 @attribute [Authorize(Roles = "User,Admin")]
-@inject IPostService PostService
 @inject ICategoryService CategoryService
+@inject IPostService PostService
 @inject IPostTagService PostTagService
 @inject ITagService TagService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
-<PageTitle>Create New Post</PageTitle>
+<PageTitle>@PageTitle</PageTitle>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Create New Post</h2>
+                <h2>@PageTitle</h2>
                 <a href="/User/Posts" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Posts
                 </a>
@@ -156,6 +156,7 @@
 <Toasts class="p-3" Messages="messages" Delay="3000" Placement="ToastsPlacement.TopRight" />
 
 @code {
+    string PageTitle = "Create New Post";
     //[SupplyParameterFromForm(FormName = "newPostBlog")]
     private Post? newPost { get; set; } = new();
     private EditContext? editContext;
