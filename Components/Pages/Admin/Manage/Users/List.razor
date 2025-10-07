@@ -1,16 +1,13 @@
 ﻿@page "/Admin/Manage/Users/List"
 @attribute [Authorize(Roles = "Admin")]
 @inject NavigationManager Navigation
+@inject IUserService IUserService
 @inject UserService UserService
 @rendermode InteractiveServer
 
 <PageTitle>@PageTitle</PageTitle>
 
 <h3>@PageTitle</h3>
-
-<div class="mb-3">
-    <a class="btn btn-success" href="/Admin/Manage/Users/New">New User</a>
-</div>
 
 <div class="card">
     <div class="card-body">

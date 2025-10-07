@@ -26,8 +26,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddBlogServices();
 
+builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient<UserService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7139/"); // your API base URL
+});
 
 builder.Services.AddHttpClient<IUserService, UserService>(client =>
 {

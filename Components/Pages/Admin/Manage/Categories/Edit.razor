@@ -1,60 +1,97 @@
 ﻿@page "/Admin/Manage/Categories/Edit/{Id:int}"
 @attribute [Authorize(Roles = "Admin")]
 @inject ICategoryService CategoryService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
-<h3>Edit Category</h3>
+<PageTitle>@PageTitle</PageTitle>
 
-<div class="card">
-    <div class="card-body">
-        @if (isLoading)
-        {
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Loading category...</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>@PageTitle</h2>
+                <a href="/Admin/Manage/Categories/List" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Categories
+                </a>
             </div>
-        }
-        else if (category == null)
-        {
-            <div class="alert alert-danger">Category not found.</div>
-        }
-        else
-        {
-            <EditForm Model="category" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
 
-                <div class="mb-3">
-                    <label class="form-label">Name</label>
-                    <InputText class="form-control" @bind-Value="category.Name" />
+            @if (isLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <InputTextArea class="form-control" @bind-Value="category.Description" rows="3" />
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <EditForm Model="@category" OnValidSubmit="ShowDialogAsync">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                                        <InputText id="name" class="form-control" @bind-Value="category.Name" placeholder="Enter category value" />
+                                        <ValidationMessage For="@(() => category.Name)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                                        <InputText id="description" class="form-control" @bind-Value="category.Description" placeholder="Enter category descripton" />
+                                        <ValidationMessage For="@(() => category.Description)" />
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                            @if (isSubmitting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            }
+                                            Update Category
+                                        </button>
+                                        <a href="/Admin/Manage/Categories/List" class="btn btn-secondary">Cancel</a>
+                                    </div>
+                                </EditForm>
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" disabled="@isSaving">
-                        @if (isSaving)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        Save
-                    </button>
-                    <a class="btn btn-secondary" href="/Admin/Manage/Categories/List">Cancel</a>
-                </div>
-            </EditForm>
-        }
+            }
+        </div>
     </div>
 </div>
 
+<ConfirmDialog @ref="dialog" />
+<Toasts class="p-3" Messages="messages" Delay="3000" Placement="ToastsPlacement.TopRight" />
+
 @code {
+    string PageTitle = "Edit Category";
+
     [Parameter] public int Id { get; set; }
 
     private Category? category;
     private bool isLoading = true;
-    private bool isSaving = false;
+    private bool isSubmitting = false;
+
+    private EditContext? editContext;
+    private bool hasChanges = false;
+
+    private ConfirmDialog dialog = default!;
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private void editContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        if (!hasChanges) hasChanges = true;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,19 +100,64 @@
         isLoading = false;
     }
 
-    private async Task HandleValidSubmit()
+    private async Task HandleSubmit()
     {
-        isSaving = true;
-        var result = await CategoryService.UpdateAsync(Id, category!);
-        isSaving = false;
+        DateTime dateTime = DateTime.UtcNow;
 
-        if (result)
+        try
         {
-            Navigation.NavigateTo("/Admin/Manage/Categories/List");
+            isSubmitting = true;
+            var result = await CategoryService.UpdateAsync(Id, category!);
+
+            if (result)
+            {
+                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Added Successfully!", dateTime.ToString(), $"Category updated successfully on {dateTime}", true));
+                await Task.Delay(3000);
+                Navigation.NavigateTo("/Admin/Manage/Categories/List");
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", dateTime.ToString(), $"An error occurred during category update on {dateTime}", true));
+                await Task.Delay(3000);
+                Console.WriteLine("Failed to update category");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // Optionally show an error message
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during category update on {DateTime.UtcNow}", true));
+            await Task.Delay(3000);
+            Console.WriteLine($"Error updating category: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
+
+    private async Task ShowSavingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Light, "Saving...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
+        await HandleSubmit();
+    }
+
+    private async Task ShowDialogAsync()
+    {
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(title: "Are you sure?", message1: "Are you sure to update the category?", confirmDialogOptions: options);
+
+        if (confirmation) await ShowSavingDataAsync();
+        else { }
+    }
+
+    private void ShowMessage(ToastType toastType, string title, string helpText, string message) => messages.Add(CreateToastMessage(toastType, title, helpText, message));
+
+    private ToastMessage CreateToastMessage(ToastType toastType, string title, string helpText, string message) => new ToastMessage
+    {
+        Type = toastType,
+        Title = title,
+        HelpText = helpText,
+        Message = message,
+    };
 }

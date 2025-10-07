@@ -20,13 +20,13 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2">Loading Reactions...</p>
+                <p class="mt-2">Loading reactions...</p>
             </div>
         }
         else if (allReactions.Count == 0)
         {
             <div class="alert alert-light border text-center" role="alert">
-                No Reactions found.
+                No reactions found.
             </div>
         }
         else
@@ -45,6 +45,9 @@
     </div>
 </div>
 
+<ConfirmDialog @ref="dialog" />
+<Toasts class="p-3" Messages="messages" Delay="3000" Placement="ToastsPlacement.TopRight" />
+
 @code {
     string PageTitle = "Reactions";
     private List<Reaction> allReactions = new();
@@ -53,6 +56,11 @@
     private int PageSize = 10;
     int[] AvailablePageSizes = new int[] { 10, 20, 50, 100 };
 
+    private ConfirmDialog dialog = default!;
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
@@ -60,17 +68,48 @@
         isLoading = false;
     }
 
-    private async Task DeleteReactionAsync(int ReactionId)
+    private async Task DeleteReactionAsync(int reactionId)
     {
+        DateTime dateTime = DateTime.UtcNow;
         var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this reaction?");
         if (confirmed)
         {
-            await ReactionService.DeleteAsync(ReactionId);
-            allReactions = await ReactionService.GetAllAsync();
+            bool result = await ReactionService.DeleteAsync(reactionId);
+            await ShowSavingDataAsync();
+
+            if (result)
+            {
+                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Deleted Successfully!", dateTime.ToString(), $"Reaction deleted successfully on {dateTime}", true));
+                await Task.Delay(3000);
+                Navigation.NavigateTo("/Admin/Manage/Reactions/List");
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", dateTime.ToString(), $"An error occurred during reaction deletion on {dateTime}", true));
+                await Task.Delay(3000);
+                Console.WriteLine("Failed to delete reaction");
+            }
         }
     }
 
     private void Edit(int id) => Navigation.NavigateTo($"/Admin/Manage/Reactions/Edit/{id}");
 
     [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private async Task ShowSavingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Light, "Deleting...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
+    }
+
+    private void ShowMessage(ToastType toastType, string title, string helpText, string message) => messages.Add(CreateToastMessage(toastType, title, helpText, message));
+
+    private ToastMessage CreateToastMessage(ToastType toastType, string title, string helpText, string message) => new ToastMessage
+    {
+        Type = toastType,
+        Title = title,
+        HelpText = helpText,
+        Message = message,
+    };
 }
