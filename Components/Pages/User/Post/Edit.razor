@@ -1,19 +1,21 @@
 ﻿@page "/User/Posts/Edit/{Id:int}"
 @attribute [Authorize(Roles = "User,Admin")]
-@inject IPostService PostService
 @inject ICategoryService CategoryService
+@inject IPostService PostService
+@inject IPostTagService PostTagService
 @inject ITagService TagService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
-<PageTitle>Edit Post</PageTitle>
+<PageTitle>@PageTitle</PageTitle>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Edit Post</h2>
-                <a href="/User/Posts" class="btn btn-secondary">
+                <h2>@PageTitle</h2>
+                <a href="/User/Posts/List" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Posts
                 </a>
             </div>
@@ -26,91 +28,42 @@
                     </div>
                 </div>
             }
-            else if (post == null)
-            {
-                <div class="alert alert-danger">
-                    <h4>Post not found</h4>
-                    <p>The post you're looking for doesn't exist or you don't have permission to edit it.</p>
-                    <a href="/User/Posts" class="btn btn-primary">Back to My Posts</a>
-                </div>
-            }
-            else if (!canEdit)
-            {
-                <div class="alert alert-warning">
-                    <h4>Access Denied</h4>
-                    <p>You can only edit posts that you created, unless you have admin privileges.</p>
-                    <a href="/User/Posts" class="btn btn-primary">Back to My Posts</a>
-                </div>
-            }
             else
             {
                 <div class="row">
                     <div class="col-lg-8">
                         <div class="card">
                             <div class="card-body">
-                                <EditForm Model="post" OnValidSubmit="HandleSubmit">
+                                <EditForm Model="@editedPost" OnValidSubmit="ShowDialogAsync">
                                     <DataAnnotationsValidator />
-                                    
+                                    <ValidationSummary />
+
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
-                                        <InputText id="title" class="form-control" @bind-Value="post.Title" placeholder="Enter post title" />
-                                        <ValidationMessage For="@(() => post.Title)" />
+                                        <InputText id="title" class="form-control" @bind-Value="editedPost.Title" placeholder="Enter post title" />
+                                        <ValidationMessage For="@(() => editedPost.Title)" />
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
-                                        <InputTextArea id="content" class="form-control" @bind-Value="post.Content" 
-                                                       rows="15" placeholder="Write your post content here..." />
-                                        <ValidationMessage For="@(() => post.Content)" />
+                                        <InputTextArea id="content" class="form-control"
+                                                       @bind-Value="editedPost.Content" rows="10"
+                                                       placeholder="Write your post content here..." />
+                                        <ValidationMessage For="@(() => editedPost.Content)" />
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="excerpt" class="form-label">Excerpt</label>
-                                        <InputTextArea id="excerpt" class="form-control" @bind-Value="post.Excerpt" 
-                                                       rows="3" placeholder="Brief description of your post (optional)" />
+                                        <InputTextArea id="excerpt" class="form-control"
+                                                       @bind-Value="editedPost.Excerpt" rows="3"
+                                                       placeholder="Brief description (optional)" />
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="coverImageUrl" class="form-label">Cover Image URL</label>
-                                        <InputText id="coverImageUrl" class="form-control" @bind-Value="post.CoverImageUrl" 
+                                        <InputText id="coverImageUrl" class="form-control"
+                                                   @bind-Value="editedPost.CoverImageUrl"
                                                    placeholder="https://example.com/image.jpg" />
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="category" class="form-label">Category</label>
-                                                <InputSelect id="category" class="form-select" @bind-Value="selectedCategoryId">
-                                                    <option value="">Select a category</option>
-                                                    @foreach (var category in categories)
-                                                    {
-                                                        <option value="@category.Id">@category.Name</option>
-                                                    }
-                                                </InputSelect>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="tags" class="form-label">Tags</label>
-                                                <InputSelect id="tags" class="form-select" @bind-Value="selectedTagIds" multiple>
-                                                    @foreach (var tag in tags)
-                                                    {
-                                                        <option value="@tag.Id">@tag.Name</option>
-                                                    }
-                                                </InputSelect>
-                                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple tags</small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <div class="form-check">
-                                            <InputCheckbox id="isPublished" class="form-check-input" @bind-Value="post.IsPublished" />
-                                            <label class="form-check-label" for="isPublished">
-                                                Published
-                                            </label>
-                                        </div>
-                                        <small class="form-text text-muted">Check to publish the post, uncheck to save as draft.</small>
                                     </div>
 
                                     <div class="d-flex gap-2">
@@ -119,27 +72,28 @@
                                             {
                                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                             }
-                                            Update Post
+                                            Save Post
                                         </button>
-                                        <a href="/User/Posts" class="btn btn-secondary">Cancel</a>
+                                        <a href="/User/Posts/List" class="btn btn-secondary">Cancel</a>
                                     </div>
                                 </EditForm>
+
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-lg-4">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">Post Information</h5>
+                                <h5 class="card-title mb-0">Post Settings</h5>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label">Status</label>
                                     <div>
-                                        @if (post.IsPublished)
+                                        @if (publishNow)
                                         {
-                                            <span class="badge bg-success">Published</span>
+                                            <span class="badge bg-success">Will be Published</span>
                                         }
                                         else
                                         {
@@ -147,36 +101,15 @@
                                         }
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Author</label>
                                     <div class="text-muted">@currentUserEmail</div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Created</label>
-                                    <div class="text-muted">@post.CreatedAt.ToString("MMM dd, yyyy HH:mm")</div>
-                                </div>
-                                
-                                @if (post.UpdatedAt.HasValue)
-                                {
-                                    <div class="mb-3">
-                                        <label class="form-label">Last Updated</label>
-                                        <div class="text-muted">@post.UpdatedAt.Value.ToString("MMM dd, yyyy HH:mm")</div>
-                                    </div>
-                                }
-                                
-                                @if (post.PublishedAt.HasValue)
-                                {
-                                    <div class="mb-3">
-                                        <label class="form-label">Published</label>
-                                        <div class="text-muted">@post.PublishedAt.Value.ToString("MMM dd, yyyy HH:mm")</div>
-                                    </div>
-                                }
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Views</label>
-                                    <div class="text-muted">@post.ViewCount</div>
+                                    <div class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
                                 </div>
                             </div>
                         </div>
@@ -187,63 +120,72 @@
     </div>
 </div>
 
+<ConfirmDialog @ref="dialog" />
+<Toasts class="p-3" Messages="messages" Delay="3000" Placement="ToastsPlacement.TopRight" />
+
 @code {
     [Parameter] public int Id { get; set; }
-    
-    private Post? post;
+
+    string PageTitle = "Edit Post";
+    //[SupplyParameterFromForm(FormName = "editedPostBlog")]
+    private Post? editedPost { get; set; } = new();
+    private EditContext? editContext;
+    private bool hasChanges = false;
+
     private List<Category> categories = new();
     private List<Tag> tags = new();
     private int? selectedCategoryId;
     private List<int> selectedTagIds = new();
+    private bool publishNow = false;
     private bool isLoading = true;
     private bool isSubmitting = false;
-    private bool canEdit = false;
     private string? currentUserId;
     private string? currentUserEmail;
-    private bool isAdmin = false;
+
+    private ConfirmDialog dialog = default!;
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private void editContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        if (!hasChanges) hasChanges = true;
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new(editedPost);
+        editContext.OnFieldChanged += editContext_OnFieldChanged;
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         currentUserEmail = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-        isAdmin = authState.User?.IsInRole("Admin") ?? false;
+        editedPost ??= new();
 
         if (!string.IsNullOrEmpty(currentUserId))
         {
             await LoadData();
         }
-        
+
         isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        editedPost = await PostService.GetByIdAsync(Id);
     }
 
     private async Task LoadData()
     {
         try
         {
-            // Load post data
-            post = await PostService.GetByIdAsync(Id);
-            
-            if (post != null)
-            {
-                // Check if user can edit this post (author or admin)
-                canEdit = post.AuthorId == currentUserId || isAdmin;
-                
-                if (canEdit)
-                {
-                    // Load categories and tags
-                    var categoriesTask = CategoryService.GetAllAsync();
-                    var tagsTask = TagService.GetAllAsync();
-                    
-                    await Task.WhenAll(categoriesTask, tagsTask);
-                    
-                    categories = categoriesTask.Result.ToList();
-                    tags = tagsTask.Result.ToList();
-                    
-                    // Set current selections (this would need additional API calls to get post categories/tags)
-                    // For now, we'll leave them empty
-                }
-            }
+            var categoriesTask = CategoryService.GetAllAsync();
+            var tagsTask = TagService.GetAllAsync();
+
+            await Task.WhenAll(categoriesTask, tagsTask);
+
+            categories = categoriesTask.Result.ToList();
+            tags = tagsTask.Result.ToList();
         }
         catch (Exception ex)
         {
@@ -254,51 +196,54 @@
 
     private async Task HandleSubmit()
     {
-        if (post == null || !canEdit)
+        if (string.IsNullOrEmpty(currentUserId))
         {
             return;
         }
 
         isSubmitting = true;
-        
+
         try
         {
-            // Update timestamp
-            post.UpdatedAt = DateTime.UtcNow;
-            
-            // Set published date if being published for the first time
-            if (post.IsPublished && !post.PublishedAt.HasValue)
+            // Set post properties
+            editedPost.IsPublished = publishNow;
+            editedPost.UpdatedAt = DateTime.UtcNow;
+            editedPost.PostCategories = selectedCategoryId.HasValue
+                ? new List<PostCategory> { new PostCategory { CategoryId = selectedCategoryId.Value } }
+                : new List<PostCategory>();
+            editedPost.PostTags = selectedTagIds.Select(tagId => new PostTag { TagId = tagId }).ToList();
+
+            if (publishNow)
             {
-                post.PublishedAt = DateTime.UtcNow;
-            }
-            // Clear published date if being unpublished
-            else if (!post.IsPublished && post.PublishedAt.HasValue)
-            {
-                post.PublishedAt = null;
+                editedPost.PublishedAt = DateTime.UtcNow;
             }
 
-            // Update slug if title changed
-            post.Slug = GenerateSlug(post.Title);
+            // Generate slug from title
+            editedPost.Slug = GenerateSlug(editedPost.Title);
 
-            // Update the post
-            var success = await PostService.UpdateAsync(post.Id, post);
-            
-            if (success)
+            // Create the post
+            var updatedPost = await PostService.UpdateAsync(Id, editedPost);
+
+            if (updatedPost)
             {
-                // TODO: Handle category and tag associations
-                // This would require additional API endpoints or service methods
-                
-                Navigation.NavigateTo("/User/Posts");
+                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Added Successfully!", editedPost.CreatedAt.ToString(), $"Post updated successfully on {editedPost.UpdatedAt}", true));
+
+                await Task.Delay(3000);
+                Navigation.NavigateTo("/User/Posts/List");
             }
             else
             {
                 // Handle error - could show a toast notification
+                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", editedPost.UpdatedAt.ToString(), $"An error occurred during post update on {editedPost.UpdatedAt}", true));
+                await Task.Delay(3000);
                 Console.WriteLine("Failed to update post");
             }
         }
         catch (Exception ex)
         {
             // Handle error - could show a toast notification
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during post addition on {DateTime.UtcNow}", true));
+            await Task.Delay(3000);
             Console.WriteLine($"Error updating post: {ex.Message}");
         }
         finally
@@ -322,5 +267,54 @@
             .Replace(",", "")
             .Replace(":", "")
             .Replace(";", "");
+    }
+
+    private async Task ShowSavingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Light, "Saving...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
+        await HandleSubmit();
+    }
+
+    private async Task ShowDialogAsync()
+    {
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(title: "Are you sure?", message1: "Are you sure to update the post?", confirmDialogOptions: options);
+
+        if (confirmation) await ShowSavingDataAsync();
+        else { }
+    }
+
+    private void ShowMessage(ToastType toastType, string title, string helpText, string message) => messages.Add(CreateToastMessage(toastType, title, helpText, message));
+
+    private ToastMessage CreateToastMessage(ToastType toastType, string title, string helpText, string message) => new ToastMessage
+    {
+        Type = toastType,
+        Title = title,
+        HelpText = helpText,
+        Message = message,
+    };
+
+    private void OnTagsChanged(ChangeEventArgs e)
+    {
+        selectedTagIds.Clear();
+        if (e.Value is not null)
+        {
+            // e.Value is a string when only one item is selected, or a string[] when multiple
+            if (e.Value is string single)
+            {
+                if (int.TryParse(single, out var id))
+                    selectedTagIds.Add(id);
+            }
+            else if (e.Value is IEnumerable<string> values)
+            {
+                foreach (var value in values)
+                {
+                    if (int.TryParse(value, out var id))
+                        selectedTagIds.Add(id);
+                }
+            }
+        }
     }
 }

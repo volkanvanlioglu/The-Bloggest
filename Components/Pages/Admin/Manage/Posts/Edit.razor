@@ -1,95 +1,320 @@
 ﻿@page "/Admin/Manage/Posts/Edit/{Id:int}"
 @attribute [Authorize(Roles = "Admin")]
-@using TheBloggest.Data.Models
-@using TheBloggest.Interfaces
+@inject ICategoryService CategoryService
 @inject IPostService PostService
+@inject IPostTagService PostTagService
+@inject ITagService TagService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
-<h3>Edit Post</h3>
+<PageTitle>@PageTitle</PageTitle>
 
-<div class="card">
-    <div class="card-body">
-        @if (isLoading)
-        {
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Loading post...</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>@PageTitle</h2>
+                <a href="/Admin/Manage/Posts/List" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Posts
+                </a>
             </div>
-        }
-        else if (post == null)
-        {
-            <div class="alert alert-danger">Post not found.</div>
-        }
-        else
-        {
-            <EditForm Model="post" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
 
-                <div class="mb-3">
-                    <label class="form-label">Title</label>
-                    <InputText class="form-control" @bind-Value="post.Title" />
+            @if (isLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Content</label>
-                    <InputTextArea class="form-control" @bind-Value="post.Content" rows="8" />
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <EditForm Model="@editedPost" OnValidSubmit="ShowDialogAsync">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                                        <InputText id="title" class="form-control" @bind-Value="editedPost.Title" placeholder="Enter post title" />
+                                        <ValidationMessage For="@(() => editedPost.Title)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                                        <InputTextArea id="content" class="form-control"
+                                                       @bind-Value="editedPost.Content" rows="10"
+                                                       placeholder="Write your post content here..." />
+                                        <ValidationMessage For="@(() => editedPost.Content)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="excerpt" class="form-label">Excerpt</label>
+                                        <InputTextArea id="excerpt" class="form-control"
+                                                       @bind-Value="editedPost.Excerpt" rows="3"
+                                                       placeholder="Brief description (optional)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="coverImageUrl" class="form-label">Cover Image URL</label>
+                                        <InputText id="coverImageUrl" class="form-control"
+                                                   @bind-Value="editedPost.CoverImageUrl"
+                                                   placeholder="https://example.com/image.jpg" />
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                            @if (isSubmitting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            }
+                                            Save Post
+                                        </button>
+                                        <a href="/User/Posts/List" class="btn btn-secondary">Cancel</a>
+                                    </div>
+                                </EditForm>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Post Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <div>
+                                        @if (publishNow)
+                                        {
+                                            <span class="badge bg-success">Will be Published</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Draft</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Author</label>
+                                    <div class="text-muted">@currentUserEmail</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Created</label>
+                                    <div class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Excerpt</label>
-                    <InputTextArea class="form-control" @bind-Value="post.Excerpt" rows="2" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Cover Image URL</label>
-                    <InputText class="form-control" @bind-Value="post.CoverImageUrl" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Published</label>
-                    <InputCheckbox class="form-check-input" @bind-Value="post.IsPublished" />
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" disabled="@isSaving">
-                        @if (isSaving)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        }
-                        Save
-                    </button>
-                    <a class="btn btn-secondary" href="/Admin/Manage/Posts/List">Cancel</a>
-                </div>
-            </EditForm>
-        }
+            }
+        </div>
     </div>
 </div>
+
+<ConfirmDialog @ref="dialog" />
+<Toasts class="p-3" Messages="messages" Delay="3000" Placement="ToastsPlacement.TopRight" />
 
 @code {
     [Parameter] public int Id { get; set; }
 
-    private Post? post;
+    string PageTitle = "Edit Post";
+    //[SupplyParameterFromForm(FormName = "editedPostBlog")]
+    private Post? editedPost { get; set; } = new();
+    private EditContext? editContext;
+    private bool hasChanges = false;
+
+    private List<Category> categories = new();
+    private List<Tag> tags = new();
+    private int? selectedCategoryId;
+    private List<int> selectedTagIds = new();
+    private bool publishNow = false;
     private bool isLoading = true;
-    private bool isSaving = false;
+    private bool isSubmitting = false;
+    private string? currentUserId;
+    private string? currentUserEmail;
+
+    private ConfirmDialog dialog = default!;
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    private void editContext_OnFieldChanged(object sender, FieldChangedEventArgs e)
+    {
+        if (!hasChanges) hasChanges = true;
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
-        post = await PostService.GetByIdAsync(Id);
+        editContext = new(editedPost);
+        editContext.OnFieldChanged += editContext_OnFieldChanged;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        currentUserEmail = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        editedPost ??= new();
+
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            await LoadData();
+        }
+
         isLoading = false;
     }
 
-    private async Task HandleValidSubmit()
+    protected override async Task OnParametersSetAsync()
     {
-        isSaving = true;
-        var result = await PostService.UpdateAsync(Id, post!);
-        isSaving = false;
+        editedPost = await PostService.GetByIdAsync(Id);
+    }
 
-        if (result)
+    private async Task LoadData()
+    {
+        try
         {
-            Navigation.NavigateTo("/Admin/Manage/Posts/List");
+            var categoriesTask = CategoryService.GetAllAsync();
+            var tagsTask = TagService.GetAllAsync();
+
+            await Task.WhenAll(categoriesTask, tagsTask);
+
+            categories = categoriesTask.Result.ToList();
+            tags = tagsTask.Result.ToList();
         }
-        else
+        catch (Exception ex)
         {
-            // Optionally show an error message
+            // Handle error - could show a toast notification
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            // Set post properties
+            editedPost.IsPublished = publishNow;
+            editedPost.UpdatedAt = DateTime.UtcNow;
+            editedPost.PostCategories = selectedCategoryId.HasValue
+                ? new List<PostCategory> { new PostCategory { CategoryId = selectedCategoryId.Value } }
+                : new List<PostCategory>();
+            editedPost.PostTags = selectedTagIds.Select(tagId => new PostTag { TagId = tagId }).ToList();
+
+            if (publishNow)
+            {
+                editedPost.PublishedAt = DateTime.UtcNow;
+            }
+
+            // Generate slug from title
+            editedPost.Slug = GenerateSlug(editedPost.Title);
+
+            // Create the post
+            var updatedPost = await PostService.UpdateAsync(Id, editedPost);
+
+            if (updatedPost)
+            {
+                ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Added Successfully!", editedPost.CreatedAt.ToString(), $"Post updated successfully on {editedPost.UpdatedAt}", true));
+
+                await Task.Delay(3000);
+                Navigation.NavigateTo("/Admin/Manage/Posts/List");
+            }
+            else
+            {
+                // Handle error - could show a toast notification
+                ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", editedPost.UpdatedAt.ToString(), $"An error occurred during post update on {editedPost.UpdatedAt}", true));
+                await Task.Delay(3000);
+                Console.WriteLine("Failed to update post");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a toast notification
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), $"An error occurred during post addition on {DateTime.UtcNow}", true));
+            await Task.Delay(3000);
+            Console.WriteLine($"Error updating post: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string GenerateSlug(string title)
+    {
+        if (string.IsNullOrEmpty(title))
+            return string.Empty;
+
+        return title.ToLowerInvariant()
+            .Replace(" ", "-")
+            .Replace("'", "")
+            .Replace("\"", "")
+            .Replace("?", "")
+            .Replace("!", "")
+            .Replace(".", "")
+            .Replace(",", "")
+            .Replace(":", "")
+            .Replace(";", "");
+    }
+
+    private async Task ShowSavingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Light, "Saving...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
+        await HandleSubmit();
+    }
+
+    private async Task ShowDialogAsync()
+    {
+        var options = new ConfirmDialogOptions { IsVerticallyCentered = true };
+        var confirmation = await dialog.ShowAsync(title: "Are you sure?", message1: "Are you sure to update the post?", confirmDialogOptions: options);
+
+        if (confirmation) await ShowSavingDataAsync();
+        else { }
+    }
+
+    private void ShowMessage(ToastType toastType, string title, string helpText, string message) => messages.Add(CreateToastMessage(toastType, title, helpText, message));
+
+    private ToastMessage CreateToastMessage(ToastType toastType, string title, string helpText, string message) => new ToastMessage
+    {
+        Type = toastType,
+        Title = title,
+        HelpText = helpText,
+        Message = message,
+    };
+
+    private void OnTagsChanged(ChangeEventArgs e)
+    {
+        selectedTagIds.Clear();
+        if (e.Value is not null)
+        {
+            // e.Value is a string when only one item is selected, or a string[] when multiple
+            if (e.Value is string single)
+            {
+                if (int.TryParse(single, out var id))
+                    selectedTagIds.Add(id);
+            }
+            else if (e.Value is IEnumerable<string> values)
+            {
+                foreach (var value in values)
+                {
+                    if (int.TryParse(value, out var id))
+                        selectedTagIds.Add(id);
+                }
+            }
         }
     }
 }

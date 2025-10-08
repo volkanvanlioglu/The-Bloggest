@@ -60,6 +60,9 @@ builder.Services.AddBlazorBootstrap();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<PreloadService>();
 
+// Add DashboardService
+builder.Services.AddScoped<DashboardService>();
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
