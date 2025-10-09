@@ -1,4 +1,10 @@
 window.setupTrendChart = (labels, postsData, commentsData) => {
+    const canvas = document.getElementById('trendChart');
+    if (!canvas) {
+        console.warn("trendChart canvas not found. Skipping setup.");
+        return;
+    }
+
     const ctx = document.getElementById('trendChart').getContext('2d');
     
     // Destroy existing chart if it exists
@@ -74,6 +80,12 @@ window.setupTrendChart = (labels, postsData, commentsData) => {
 };
 
 window.setupRoleChart = (labels, data) => {
+    const canvas = document.getElementById('roleChart');
+    if (!canvas) {
+        console.warn("trendChart canvas not found. Skipping setup.");
+        return;
+    }
+
     const ctx = document.getElementById('roleChart').getContext('2d');
     
     // Destroy existing chart if it exists

@@ -1,136 +1,8 @@
 ﻿@page "/Admin/Dashboard"
-@using TheBloggest.Data.Models
-@using TheBloggest.Services
-@using BlazorBootstrap
 @attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
 
-<style>
-    .dashboard-container {
-        padding: 2rem;
-        background-color: #f8f9fa;
-        min-height: 100vh;
-    }
-
-    .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 1rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-    .dashboard-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .summary-card {
-        background: white;
-        border-radius: 1rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        border: none;
-        overflow: hidden;
-    }
-
-        .summary-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-        }
-
-    .summary-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5rem;
-    }
-
-    .card-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0.5rem 0;
-    }
-
-    .chart-card, .analytics-card {
-        background: white;
-        border-radius: 1rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: none;
-        overflow: hidden;
-    }
-
-    .chart-container {
-        height: 300px;
-        width: 100%;
-    }
-
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .activity-bar {
-        width: 100%;
-        height: 8px;
-        background-color: #e9ecef;
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 0.25rem;
-    }
-
-    .activity-progress {
-        height: 100%;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        border-radius: 4px;
-        transition: width 0.3s ease;
-    }
-
-    .btn-modern {
-        border-radius: 0.75rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-    @@media (max-width: 768px) {
-        .dashboard-container {
-            padding: 1rem;
-        }
-
-        .dashboard-title {
-            font-size: 2rem;
-        }
-
-        .card-number {
-            font-size: 2rem;
-        }
-
-        .summary-icon {
-            width: 50px;
-            height: 50px;
-            font-size: 1.25rem;
-        }
-    }
-</style>
-
-<PageTitle>Dashboard - TheBloggest Admin</PageTitle>
+<PageTitle>@PageTitle</PageTitle>
 
 <AuthorizeView Roles="Admin">
     <Authorized>
@@ -139,7 +11,7 @@
             <div class="dashboard-header mb-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title mb-1">Dashboard</h1>
+                        <h1 class="dashboard-title mb-1">@PageTitle</h1>
                         @* <p class="text-muted mb-0">Welcome back, @context.User.Identity?.Name!</p> *@
                     </div>
                     <div class="d-flex gap-2">
@@ -160,7 +32,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="summary-card">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
+                                <div class="p-2 d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title text-muted">Total Posts</h6>
                                         <h2 class="card-number text-primary">@dashboardData.TotalPosts</h2>
@@ -179,7 +51,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="summary-card">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
+                                <div class="p-2 d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title text-muted">Total Comments</h6>
                                         <h2 class="card-number text-info">@dashboardData.TotalComments</h2>
@@ -198,7 +70,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="summary-card">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
+                                <div class="p-2 d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="card-title text-muted">Total Users</h6>
                                         <h2 class="card-number text-success">@dashboardData.TotalUsers</h2>
@@ -218,7 +90,7 @@
                 <!-- Charts Section -->
                 <div class="row g-4 mb-4">
                     <div class="col-lg-8">
-                        <div class="chart-card">
+                        <div class="chart-card p-2">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">Posts & Comments Trends</h5>
                                 <p class="text-muted mb-0">Activity over the last 12 months</p>
@@ -230,7 +102,7 @@
                     </div>
 
                     <div class="col-lg-4">
-                        <div class="chart-card">
+                        <div class="chart-card p-2">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">User Role Distribution</h5>
                                 <p class="text-muted mb-0">Current user roles</p>
@@ -245,7 +117,7 @@
                 <!-- User Analytics Section -->
                 <div class="row">
                     <div class="col-12">
-                        <div class="analytics-card">
+                        <div class="analytics-card p-2">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">Most Active Users</h5>
                                 <p class="text-muted mb-0">Top contributors this month</p>
@@ -319,21 +191,30 @@
 </AuthorizeView>
 
 @code {
+    string PageTitle = "Dashboard";
     [Inject] private DashboardService DashboardService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-    
+    private bool chartsInitialized = false;
     private DashboardData? dashboardData;
 
-    protected override async Task OnInitializedAsync()
-    {
-        dashboardData = await DashboardService.GetDashboardDataAsync();
-    }
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     dashboardData = await DashboardService.GetDashboardDataAsync();
+    // }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && dashboardData != null)
+        if (firstRender)
         {
+            // Load data first
+            dashboardData = await DashboardService.GetDashboardDataAsync();
+            StateHasChanged(); // Force re-render so the canvases appear
+        }
+        else if (dashboardData != null && !chartsInitialized)
+        {
+            // Now the DOM is ready, set up the charts
             await SetupCharts();
+            chartsInitialized = true;
         }
     }
 

@@ -181,7 +181,7 @@ namespace TheBloggest.Services
             var topUsers = await _context.Users
                 .Select(u => new UserActivity
                 {
-                    Username = u.UserName ?? u.Email ?? "Unknown",
+                    Username = u.DisplayName ?? "Unknown",
                     PostCount = u.Posts.Count(),
                     CommentCount = u.Comments.Count(),
                     Role = "Reader" // Default role
@@ -194,7 +194,7 @@ namespace TheBloggest.Services
             foreach (var user in topUsers)
             {
                 var userEntity = await _context.Users
-                    .FirstOrDefaultAsync(u => (u.UserName ?? u.Email) == user.Username);
+                    .FirstOrDefaultAsync(u => (u.DisplayName ?? u.Email) == user.Username);
                 
                 if (userEntity != null)
                 {
@@ -237,8 +237,7 @@ namespace TheBloggest.Services
 
         private List<MonthlyActivity> GetDefaultMonthlyData()
         {
-            var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+            var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
             
             return months.Select(month => new MonthlyActivity
             {
