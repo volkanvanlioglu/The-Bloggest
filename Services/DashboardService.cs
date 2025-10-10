@@ -17,12 +17,10 @@ namespace TheBloggest.Services
         {
             try
             {
-                // Get total counts
                 var totalPosts = await _context.Posts.CountAsync();
                 var totalComments = await _context.Comments.CountAsync();
                 var totalUsers = await _context.Users.CountAsync();
 
-                // Calculate trend percentages (comparing with previous month)
                 var now = DateTime.UtcNow;
                 var lastMonth = now.AddMonths(-1);
                 var twoMonthsAgo = now.AddMonths(-2);
@@ -43,24 +41,18 @@ namespace TheBloggest.Services
                     .Where(c => c.CreatedAt >= twoMonthsAgo && c.CreatedAt < lastMonth)
                     .CountAsync();
 
-                // Note: Identity Users don't have CreatedAt by default, so we'll use a simplified approach
-                // You could add a CreatedAt property to ApplicationUser if you need this functionality
-                var usersLastMonth = 0; // Simplified for now
-                var usersTwoMonthsAgo = 0; // Simplified for now
+                var usersLastMonth = 0;
+                var usersTwoMonthsAgo = 0;
 
-                // Calculate trend percentages
                 var postsTrendPercentage = CalculateTrendPercentage(postsLastMonth, postsTwoMonthsAgo);
                 var commentsTrendPercentage = CalculateTrendPercentage(commentsLastMonth, commentsTwoMonthsAgo);
                 var usersTrendPercentage = CalculateTrendPercentage(usersLastMonth, usersTwoMonthsAgo);
 
-                // Get monthly activity data for the last 12 months
                 var monthlyPosts = await GetMonthlyActivityData("Posts");
                 var monthlyComments = await GetMonthlyActivityData("Comments");
 
-                // Get user role distribution
                 var userRoleDistribution = await GetUserRoleDistribution();
 
-                // Get top active users
                 var topActiveUsers = await GetTopActiveUsers();
 
                 return new DashboardData
@@ -79,10 +71,7 @@ namespace TheBloggest.Services
             }
             catch (Exception ex)
             {
-                // Log the exception (you might want to use a proper logging framework)
                 Console.WriteLine($"Error fetching dashboard data: {ex.Message}");
-                
-                // Return fallback data
                 return GetFallbackData();
             }
         }
@@ -95,12 +84,10 @@ namespace TheBloggest.Services
 
         private async Task<List<MonthlyActivity>> GetMonthlyActivityData(string type)
         {
-            var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+            var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
             
             var result = new List<MonthlyActivity>();
 
-            // Get data for the last 12 months
             var now = DateTime.UtcNow;
             
             for (int i = 11; i >= 0; i--)
@@ -137,7 +124,6 @@ namespace TheBloggest.Services
         {
             try
             {
-                // Get all users with their roles
                 var usersWithRoles = await _context.UserRoles
                     .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, RoleName = r.Name })
                     .Join(_context.Users, ur => ur.UserId, u => u.Id, (ur, u) => new { ur.RoleName, UserId = u.Id })
@@ -152,7 +138,6 @@ namespace TheBloggest.Services
                     distribution[role.Role ?? "Reader"] = role.Count;
                 }
 
-                // Add users without roles as "Reader"
                 var usersWithRolesCount = distribution.Values.Sum();
                 var totalUsers = await _context.Users.CountAsync();
                 var readersCount = totalUsers - usersWithRolesCount;
@@ -166,7 +151,6 @@ namespace TheBloggest.Services
             }
             catch
             {
-                // Fallback if there's an issue with roles
                 return new Dictionary<string, int>
                 {
                     { "Admin", 1 },
@@ -184,13 +168,12 @@ namespace TheBloggest.Services
                     Username = u.DisplayName ?? "Unknown",
                     PostCount = u.Posts.Count(),
                     CommentCount = u.Comments.Count(),
-                    Role = "Reader" // Default role
+                    Role = "Reader"
                 })
                 .OrderByDescending(u => u.PostCount + u.CommentCount)
                 .Take(5)
                 .ToListAsync();
 
-            // Update roles for users who have roles assigned
             foreach (var user in topUsers)
             {
                 var userEntity = await _context.Users

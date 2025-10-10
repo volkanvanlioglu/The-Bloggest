@@ -1,0 +1,233 @@
+@page "/Settings"
+@attribute [Authorize(Roles = "Admin")]
+@inject ISettingsService SettingsService
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+@rendermode InteractiveServer
+
+<PageTitle>@PageTitle</PageTitle>
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <div class="container-fluid py-4">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h1 class="h3 mb-1">@PageTitle</h1>
+                            <p class="text-muted mb-0">Manage application settings and page visibility</p>
+                        </div>
+                    </div>
+
+                    <!-- Page Visibility Settings Card -->
+                    <Card Class="settings-card shadow-sm mb-4">
+                        <CardHeader Class="settings-header border-bottom">
+                            <CardTitle Class="h5 mb-0 d-flex align-items-center">
+                                <i class="bi bi-eye me-2"></i>
+                                Page Visibility Settings
+                            </CardTitle>
+                        </CardHeader>
+                        <CardBody>
+                            <p class="text-muted mb-4">Configure which pages are visible to regular users in the navigation menu.</p>
+                            
+                            @if (isLoading)
+                            {
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading settings...</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    @for (int i = 0; i < pageSettings.Count; i++)
+                                    {
+                                        int index = i; // Capture for closure
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" 
+                                                       type="checkbox" 
+                                                       id="page-@index"
+                                                       @bind="pageSettings[index].IsVisible"
+                                                       @bind:event="onchange">
+                                                <label class="form-check-label d-flex align-items-center" for="page-@index">
+                                                    <i class="bi bi-@GetPageIcon(pageSettings[index].PageName) page-icon"></i>
+                                                    <span class="fw-medium">@pageSettings[index].PageName</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                                    <Button Color="ButtonColor.Primary" 
+                                            Size="ButtonSize.Medium"
+                                            Class="btn-settings"
+                                            OnClick="SaveSettingsAsync"
+                                            Disabled="@isSaving">
+                                        @if (isSaving)
+                                        {
+                                            <span class="spinner-border spinner-border-sm loading-spinner me-2" role="status" aria-hidden="true"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-check-circle me-2"></i>
+                                        }
+                                        Save Changes
+                                    </Button>
+                                    
+                                    <Button Color="ButtonColor.Secondary" 
+                                            Size="ButtonSize.Medium"
+                                            Class="btn-settings"
+                                            OnClick="ResetSettingsAsync"
+                                            Disabled="@isResetting">
+                                        @if (isResetting)
+                                        {
+                                            <span class="spinner-border spinner-border-sm loading-spinner me-2" role="status" aria-hidden="true"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-arrow-clockwise me-2"></i>
+                                        }
+                                        Reset Defaults
+                                    </Button>
+                                </div>
+                            }
+                        </CardBody>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6 text-center">
+                    <div class="card access-denied-card">
+                        <div class="card-body">
+                            <i class="bi bi-shield-exclamation access-denied-icon" style="font-size: 3rem;"></i>
+                            <h3 class="card-title text-danger mt-3">Access Denied</h3>
+                            <p class="card-text">You do not have permission to access this page. Only administrators can view settings.</p>
+                            <Button Color="ButtonColor.Primary" Class="btn-settings" OnClick="NavigateToHome">
+                                <i class="bi bi-house me-2"></i>Return to Home
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    string PageTitle = "Settings";
+    private List<PageVisibilityOption> pageSettings = new();
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isResetting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPageVisibilitySettings();
+    }
+
+    private async Task LoadPageVisibilitySettings()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            pageSettings = await SettingsService.GetPageVisibilityAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading page visibility settings: {ex.Message}");
+            // Fallback to default settings
+            pageSettings = SettingsService.GetDefaultPageVisibility();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            await SettingsService.SavePageVisibilityAsync(pageSettings);
+            
+            // Log the updated settings for debugging
+            Console.WriteLine("Page visibility settings updated:");
+            foreach (var setting in pageSettings)
+            {
+                Console.WriteLine($"  {setting.PageName}: {(setting.IsVisible ? "Visible" : "Hidden")}");
+            }
+
+            // Show success message
+            ToastService.Notify(new(ToastType.Success, "bi bi-check-circle-fill", "Success!", DateTime.UtcNow.ToString(), "Settings saved successfully!", true));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving settings: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), "Failed to save settings. Please try again.", true));
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ResetSettingsAsync()
+    {
+        try
+        {
+            isResetting = true;
+            StateHasChanged();
+
+            // Reset to default settings
+            pageSettings = SettingsService.GetDefaultPageVisibility();
+            
+            ToastService.Notify(new(ToastType.Info, "bi bi-info-circle-fill", "Info", DateTime.UtcNow.ToString(), "Settings reset to defaults!", true));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resetting settings: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "bi bi-exclamation-triangle-fill", "Error!", DateTime.UtcNow.ToString(), "Failed to reset settings. Please try again.", true));
+        }
+        finally
+        {
+            isResetting = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetPageIcon(string pageName)
+    {
+        return pageName switch
+        {
+            "Dashboard" => "speedometer2",
+            "Posts" => "file-text",
+            "Comments" => "chat-dots",
+            "Users" => "people",
+            "Profile" => "person-circle",
+            "Analytics" => "graph-up",
+            _ => "file"
+        };
+    }
+
+    private void NavigateToHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

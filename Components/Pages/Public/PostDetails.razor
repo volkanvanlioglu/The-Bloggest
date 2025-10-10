@@ -3,6 +3,7 @@
 @inject IPostService PostService
 @inject IUserService UserService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -75,7 +76,7 @@
                                 <h3 class="h5 mb-3">Add a comment</h3>
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <input class="form-control" placeholder="Your name" @bind="newComment.AuthorName" />
+                                        <input class="form-control" placeholder="Your name" @bind="newComment.AuthorName" disabled />
                                     </div>
                                     <div class="col-12">
                                         <textarea class="form-control" rows="4" placeholder="Your comment" @bind="newComment.Content"></textarea>
@@ -134,6 +135,14 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
 
+        string currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var commentator = await UserService.GetByIdAsync(Guid.Parse(currentUserId));
+
+        if (commentator != null)
+        {
+            newComment.AuthorName = commentator.DisplayName ?? "Guest";
+        }
+
         isLoading = false;
     }
 
@@ -143,12 +152,17 @@
             return;
 
         isSubmitting = true;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        string currentUserId = authState.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         await CommentService.CreateAsync(new Comment
         {
             AuthorName = newComment.AuthorName.Trim(),
             Content = newComment.Content.Trim(),
             CreatedAt = DateTime.UtcNow,
-            PostId = post.Id
+            PostId = post.Id,
+            UserId = currentUserId
         });
 
         // Refresh from service to reflect latest state

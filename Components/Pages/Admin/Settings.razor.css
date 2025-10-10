@@ -1,0 +1,133 @@
+/* Settings Page Styles */
+.settings-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.settings-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border-color: #dee2e6;
+}
+
+.form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-label {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-check-label:hover {
+    color: #0d6efd;
+}
+
+.page-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.form-check:hover .page-icon {
+    color: #0d6efd;
+}
+
+.btn-settings {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+}
+
+.btn-settings:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.settings-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.access-denied-card {
+    border: 2px solid #dc3545;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+}
+
+.access-denied-icon {
+    color: #dc3545;
+    filter: drop-shadow(0 2px 4px rgba(220, 53, 69, 0.3));
+}
+
+/* Loading states */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .settings-card {
+        margin: 0 -15px;
+        border-radius: 0;
+    }
+    
+    .btn-settings {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+}
+
+/* Checkbox animations */
+.form-check-input {
+    position: relative;
+}
+
+.form-check-input::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked::before {
+    width: 20px;
+    height: 20px;
+}
+
+/* Card header styling */
+.card-header.bg-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+
+/* Button group styling */
+.d-flex.gap-2 {
+    gap: 0.75rem !important;
+}

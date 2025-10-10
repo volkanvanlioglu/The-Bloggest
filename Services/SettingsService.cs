@@ -8,6 +8,17 @@ namespace TheBloggest.Services
         private const string baseUrl = "api/Settings";
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        
+        // In-memory storage for page visibility settings (for now)
+        private static List<PageVisibilityOption> _pageVisibilitySettings = new()
+        {
+            new PageVisibilityOption { PageName = "Dashboard", IsVisible = true },
+            new PageVisibilityOption { PageName = "Posts", IsVisible = true },
+            new PageVisibilityOption { PageName = "Comments", IsVisible = false },
+            new PageVisibilityOption { PageName = "Users", IsVisible = true },
+            new PageVisibilityOption { PageName = "Profile", IsVisible = true },
+            new PageVisibilityOption { PageName = "Analytics", IsVisible = false }
+        };
 
         public SettingsService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
@@ -23,6 +34,7 @@ namespace TheBloggest.Services
             }
         }
 
+        // Original settings methods
         public async Task<List<Settings>> GetAllAsync() => await _httpClient.GetFromJsonAsync<List<Settings>>($"{baseUrl}/Get") ?? [];
 
         public async Task<Settings?> GetByIdAsync(int id) => await _httpClient.GetFromJsonAsync<Settings>($"{baseUrl}/Get/{id}");
@@ -43,6 +55,34 @@ namespace TheBloggest.Services
         {
             var response = await _httpClient.DeleteAsync($"{baseUrl}/Delete/{id}");
             return response.IsSuccessStatusCode;
+        }
+
+        // Page visibility methods
+        public async Task<List<PageVisibilityOption>> GetPageVisibilityAsync()
+        {
+            // Simulate async operation
+            await Task.Delay(100);
+            return new List<PageVisibilityOption>(_pageVisibilitySettings);
+        }
+
+        public async Task SavePageVisibilityAsync(List<PageVisibilityOption> settings)
+        {
+            // Simulate async operation
+            await Task.Delay(200);
+            _pageVisibilitySettings = new List<PageVisibilityOption>(settings);
+        }
+
+        public List<PageVisibilityOption> GetDefaultPageVisibility()
+        {
+            return new List<PageVisibilityOption>
+            {
+                new PageVisibilityOption { PageName = "Dashboard", IsVisible = true },
+                new PageVisibilityOption { PageName = "Posts", IsVisible = true },
+                new PageVisibilityOption { PageName = "Comments", IsVisible = false },
+                new PageVisibilityOption { PageName = "Users", IsVisible = true },
+                new PageVisibilityOption { PageName = "Profile", IsVisible = true },
+                new PageVisibilityOption { PageName = "Analytics", IsVisible = false }
+            };
         }
     }
 }
