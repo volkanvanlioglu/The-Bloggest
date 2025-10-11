@@ -71,5 +71,15 @@ namespace TheBloggest.Controllers
 
             return posts;
         }
+
+        // 🔒 Get posts by author (for user's own posts)
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsByPostAsync([FromQuery] string postId)
+        {
+            var comments = await _context.Comments.Where(p => p.PostId.ToString() == postId).OrderByDescending(p => p.CreatedAt).ToListAsync();
+
+            return comments;
+        }
     }
 }

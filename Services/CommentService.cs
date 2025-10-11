@@ -46,5 +46,7 @@ namespace TheBloggest.Services
         }
 
         public async Task<IEnumerable<Comment>> GetCommentsByUserAsync(string userId) => await _httpClient.GetFromJsonAsync<IEnumerable<Comment>>($"{baseUrl}/GetCommentsByUser?userId={userId}") ?? [];
+
+        public async Task<IEnumerable<Comment>> GetCommentsByPostAsync(string postId) => await _httpClient.GetFromJsonAsync<IEnumerable<Comment>>($"{baseUrl}/GetCommentsByPost?postId={postId}") ?? [];
     }
 }

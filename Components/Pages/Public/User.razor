@@ -104,6 +104,8 @@
     }
 </div>
 
+<Preload LoadingText="Loading..."></Preload>
+
 @code {
     [Parameter] public Guid Id { get; set; }
 
@@ -113,9 +115,19 @@
     private int totalPosts = 0;
     private bool isLoading = true;
 
+    [Inject] protected PreloadService PreloadService { get; set; } = default!;
+
     protected override Task OnInitializedAsync()
     {
         return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ShowLoadingDataAsync();
+        }
     }
 
     protected override async Task OnParametersSetAsync()
@@ -142,5 +154,12 @@
         var text = content.Replace("\r", string.Empty).Replace("\n", " ");
         if (text.Length <= maxLength) return text;
         return text.Substring(0, maxLength).TrimEnd() + "…";
+    }
+
+    private async Task ShowLoadingDataAsync()
+    {
+        PreloadService.Show(SpinnerColor.Primary, "Loading...");
+        await Task.Delay(1000);
+        PreloadService.Hide();
     }
 }

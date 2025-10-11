@@ -31,7 +31,7 @@
                 <GridColumns>
                     <GridColumn TItem="Post" HeaderText="Id" PropertyName="Id">@context.Id</GridColumn>
                     <GridColumn TItem="Post" HeaderText="Title" PropertyName="Title">@context.Title</GridColumn>
-                    <GridColumn TItem="Post" HeaderText="Content" PropertyName="Content">@context.Content</GridColumn>
+                    <GridColumn TItem="Post" HeaderText="Content" PropertyName="Content">@((MarkupString)Shorten(context.Content, 100))</GridColumn>
                     <GridColumn TItem="Post" HeaderText="Created At" PropertyName="CreatedAt">@context.CreatedAt</GridColumn>
                     <GridColumn TItem="Post" HeaderText="Updated At" PropertyName="UpdatedAt">@context.UpdatedAt</GridColumn>
                     <GridColumn TItem="Post" HeaderText="View Count" PropertyName="ViewCount">@context.ViewCount</GridColumn>
@@ -112,4 +112,12 @@
         HelpText = helpText,
         Message = message,
     };
+
+    private static string Shorten(string? content, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return string.Empty;
+        var text = content.Replace("\r", string.Empty).Replace("\n", " ");
+        if (text.Length <= maxLength) return text;
+        return text.Substring(0, maxLength).TrimEnd() + "…";
+    }
 }
