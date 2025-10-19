@@ -165,7 +165,7 @@ namespace TheBloggest.Services
             var topUsers = await _context.Users
                 .Select(u => new UserActivity
                 {
-                    Username = u.DisplayName ?? "Unknown",
+                    Username = u.UserName ?? "Unknown",
                     PostCount = u.Posts.Count(),
                     CommentCount = u.Comments.Count(),
                     Role = "Reader"
@@ -177,7 +177,7 @@ namespace TheBloggest.Services
             foreach (var user in topUsers)
             {
                 var userEntity = await _context.Users
-                    .FirstOrDefaultAsync(u => (u.DisplayName ?? u.Email) == user.Username);
+                    .FirstOrDefaultAsync(u => (u.UserName ?? u.Email) == user.Username);
                 
                 if (userEntity != null)
                 {

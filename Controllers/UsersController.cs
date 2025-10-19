@@ -42,45 +42,21 @@ namespace TheBloggest.Controllers
         //    return CreatedAtAction(nameof(GetByIdAsync), new { id = ApplicationUser.Id }, ApplicationUser);
         //}
 
-        //// 🔒 Users can edit their own ApplicationUsers, Admins can edit any ApplicationUser
-        //[HttpPut("{id}")]
-        //[Authorize(Roles = "User,Admin")]
-        //public async Task<IActionResult> Update(int id, ApplicationUser ApplicationUser)
-        //{
-        //    if (id != ApplicationUser.Id) return BadRequest();
+        // 🔒 Users can edit their own ApplicationUsers, Admins can edit any ApplicationUser
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, ApplicationUser ApplicationUser)
+        {
+            if (id != Guid.Parse(ApplicationUser.Id)) return BadRequest();
 
-        //    var existingApplicationUser = await _context.Users.FindAsync(id);
-        //    if (existingApplicationUser == null) return NotFound();
+            var existingApplicationUser = await _context.Users.FindAsync(id.ToString());
+            if (existingApplicationUser == null) return NotFound();
 
-        //    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        //    var isAdmin = User.IsInRole("Admin");
+            // Update the ApplicationUser
+            existingApplicationUser.DisplayName = ApplicationUser.DisplayName;
 
-        //    // Users can only edit their own ApplicationUsers, admins can edit any ApplicationUser
-        //    if (!isAdmin && existingApplicationUser.AuthorId != currentUserId)
-        //        return Forbid();
-
-        //    // Update the ApplicationUser
-        //    existingApplicationUser.Title = ApplicationUser.Title;
-        //    existingApplicationUser.Content = ApplicationUser.Content;
-        //    existingApplicationUser.Excerpt = ApplicationUser.Excerpt;
-        //    existingApplicationUser.CoverImageUrl = ApplicationUser.CoverImageUrl;
-        //    existingApplicationUser.IsPublished = ApplicationUser.IsPublished;
-        //    existingApplicationUser.Slug = ApplicationUser.Slug;
-        //    existingApplicationUser.UpdatedAt = DateTime.UtcNow;
-
-        //    // Handle published date
-        //    if (ApplicationUser.IsPublished && !existingApplicationUser.PublishedAt.HasValue)
-        //    {
-        //        existingApplicationUser.PublishedAt = DateTime.UtcNow;
-        //    }
-        //    else if (!ApplicationUser.IsPublished && existingApplicationUser.PublishedAt.HasValue)
-        //    {
-        //        existingApplicationUser.PublishedAt = null;
-        //    }
-
-        //    await _context.SaveChangesAsync();
-        //    return NoContent();
-        //}
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
 
         //// 🔒 Users can delete their own ApplicationUsers, Admins can delete any ApplicationUser
         //[HttpDelete("{id}")]

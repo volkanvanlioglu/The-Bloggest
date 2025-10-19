@@ -10,6 +10,7 @@
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
+@inject UserService userService
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject ILogger<Register> Logger
@@ -76,10 +77,21 @@
         var user = CreateUser();
         string userName = Input.DisplayName;
 
-        await UserStore.SetUserNameAsync(user, userName, CancellationToken.None);
+        await UserStore.SetUserNameAsync(user, Input.DisplayName, CancellationToken.None);
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         var result = await UserManager.CreateAsync(user, Input.Password);
+
+        // var userId1 = await UserManager.GetUserIdAsync(user);
+
+        // var userToBeUpdated = new ApplicationUser
+        // {
+        //     Id = userId1,
+        //     DisplayName = userName,
+        //     UserName = Input.Email,
+        //     Email = Input.Email
+        // };
+        // await userService.UpdateAsync(Guid.Parse(userId1), userToBeUpdated);
 
         if (!result.Succeeded)
         {

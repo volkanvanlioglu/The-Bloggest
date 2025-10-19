@@ -33,7 +33,7 @@
                     <GridColumn TItem="ApplicationUser" HeaderText="Id" PropertyName="Id">@context.Id</GridColumn>
                     <GridColumn TItem="ApplicationUser" HeaderText="User Name" PropertyName="UserName">@context.UserName</GridColumn>
                     <GridColumn TItem="ApplicationUser" HeaderText="Actions" Filterable="@false">
-                        <button class="btn btn-danger" @onclick="() => Details(Guid.Parse(context.Id))">Details</button>
+                        <button class="btn btn-warning" @onclick="() => Details(Guid.Parse(context.Id))">Details</button>
                         <button class="btn btn-danger" @onclick="() => DeleteUserAsync(Guid.Parse(context.Id))">Delete</button>
                     </GridColumn>
                 </GridColumns>

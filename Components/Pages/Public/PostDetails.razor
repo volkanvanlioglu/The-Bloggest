@@ -29,7 +29,7 @@
                                 <h1 class="display-6 fw-semibold">@post.Title</h1>
                                 <img src="@((!string.IsNullOrEmpty(post.CoverImageUrl) && post.CoverImageUrl.CompareTo("https://example.com/image.jpg") != 0) ? post.CoverImageUrl : "/images/no_image.png")" class="card-img img-fluid" alt="@post.Title" style="height: 200px; object-fit: cover;" />
                                 <div class="text-muted">
-                                    By <strong>@(authorCache.TryGetValue(post.AuthorId, out var author) ? author.DisplayName ?? post.AuthorId : post.AuthorId)</strong>
+                                    By <strong>@(authorCache.TryGetValue(post.AuthorId, out var author) ? author.UserName ?? post.AuthorId : post.AuthorId)</strong>
                                     <span class="mx-2">•</span>
                                     <span>@post.PublishedAt.ToString()</span>
                                 </div>
@@ -41,7 +41,7 @@
                     </div>
                     <div class="card-footer">
                         <a href=@($"/Users/{post.AuthorId}")>
-                            @(authorCache.TryGetValue(post.AuthorId, out var author1) ? author1.DisplayName ?? post.AuthorId : post.AuthorId)
+                            @(authorCache.TryGetValue(post.AuthorId, out var author1) ? author1.UserName ?? post.AuthorId : post.AuthorId)
                         </a>'s other posts
                     </div>
                 </div>

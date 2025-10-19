@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.Text.Json.Serialization;
 
 namespace TheBloggest.Data.Models
 {
@@ -10,7 +12,12 @@ namespace TheBloggest.Data.Models
         public string? Bio { get; set; }
 
         // Navigation
+
+        [JsonIgnore]
+        [ValidateNever]
         public ICollection<Post> Posts { get; set; }
+        [JsonIgnore]
+        [ValidateNever]
         public ICollection<Comment> Comments { get; set; }
     }
 }

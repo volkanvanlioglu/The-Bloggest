@@ -22,7 +22,7 @@
     {
         <div class="card shadow-sm mb-4" style="background-color: #f8f9fa;">
             <div class="card-body">
-                <h2 class="h4 mb-2">@author.DisplayName</h2>
+                <h2 class="h4 mb-2">@author.UserName</h2>
                 <div class="mb-2">
                     <strong>Posts:</strong> @authorPosts.Count
                     <span class="mx-2">•</span>
@@ -43,7 +43,7 @@
         </div>
 
         <div class="mb-4">
-            <h3 class="h5 mb-3">Posts by @author.DisplayName</h3>
+            <h3 class="h5 mb-3">Posts by @author.UserName</h3>
             @if (authorPosts.Count > 0)
             {
                 <div class="row g-4">
@@ -80,7 +80,7 @@
         </div>
 
         <div class="mb-4">
-            <h3 class="h5 mb-3">Comments by @author.DisplayName</h3>
+            <h3 class="h5 mb-3">Comments by @author.UserName</h3>
             @if (authorComments.Count > 0)
             {
                 <div class="list-group">
@@ -142,7 +142,7 @@
             totalPosts = allPosts.Count();
 
             var allComments = await CommentService.GetAllAsync();
-            authorComments = allComments.Where(c => c.AuthorName == author.DisplayName!.ToString()).ToList();
+            authorComments = allComments.Where(c => c.AuthorName == author.UserName!.ToString()).ToList();
         }
 
         isLoading = false;

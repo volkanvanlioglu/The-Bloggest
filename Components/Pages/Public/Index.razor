@@ -39,7 +39,7 @@
                                     </CardTitle>
                                     <div class="text-muted small mb-2">
                                         <span class="me-2">
-                                            By <strong><a href="@($"/Users/{post.AuthorId}")">@(authorCache.TryGetValue(post.AuthorId, out var author) ? author.DisplayName : "Unknown")</a></strong>
+                                            By <strong><a href="@($"/Users/{post.AuthorId}")">@(authorCache.TryGetValue(post.AuthorId, out var author) ? author.UserName : "Unknown")</a></strong>
                                         </span>
                                         <span class="me-2">•</span>
                                         <span>@post.PublishedAt!.Value.ToString("dd.MM.yyyy")</span>
